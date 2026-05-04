@@ -11,11 +11,11 @@ import UserManagement from './pages/UserManagement';
 import PayrollManagement from './pages/PayrollManagement';
 import Profile from './pages/Profile';
 import PositionList from './pages/PositionList';
-import SalaryScaleList from '.
-/pages/SalaryScaleList';
+import SalaryScaleList from './pages/SalaryScaleList';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoginLogs from './pages/LoginLogs';
+import SystemConfig from './pages/SystemConfig';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 function App() {
@@ -67,6 +67,12 @@ function App() {
           <Route path="login-logs" element={
             <ProtectedRoute allowedRoles={['db_Admin']}>
               <LoginLogs />
+            </ProtectedRoute>
+          } />
+
+          <Route path="configs" element={
+            <ProtectedRoute allowedRoles={['db_Admin']}>
+              <SystemConfig />
             </ProtectedRoute>
           } />
 

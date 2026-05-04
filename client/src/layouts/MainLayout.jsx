@@ -99,6 +99,11 @@ const MainLayout = () => {
       key: '/login-logs',
       icon: <LogIn size={18} />,
       label: <Link to="/login-logs">Nhật ký đăng nhập</Link>,
+    },
+    {
+      key: '/configs',
+      icon: <Settings size={18} />,
+      label: <Link to="/configs">Cấu hình hệ thống</Link>,
     }
   ];
 

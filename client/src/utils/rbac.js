@@ -36,6 +36,7 @@ export const MENU_PERMISSIONS = {
   '/users': [ROLES.ADMIN],
   '/audit': [ROLES.ADMIN],
   '/login-logs': [ROLES.ADMIN],
+  '/configs': [ROLES.ADMIN],
   '/positions': [ROLES.ADMIN, ROLES.HR_HUMAN],
   '/salary-scales': [ROLES.ADMIN, ROLES.HR_HUMAN],
 };

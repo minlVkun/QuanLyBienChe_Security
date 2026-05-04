@@ -32,7 +32,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onLogout }) => {
       title="Đổi Mật Khẩu"
       open={isOpen}
       onCancel={handleCancel}
-      destroyOnClose
+      destroyOnHidden
       mask={{ closable: false }}
       okText="Xác nhận"
       cancelText="Hủy"

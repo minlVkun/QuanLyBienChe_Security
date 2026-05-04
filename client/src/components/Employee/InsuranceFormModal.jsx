@@ -56,7 +56,7 @@ const InsuranceFormModal = ({ isOpen, onClose, onSuccess, employeeId, initialDat
             onCancel={onClose}
             onOk={() => form.submit()}
             confirmLoading={loading}
-            destroyOnClose
+            destroyOnHidden
             maskClosable={false}
             centered
             footer={[

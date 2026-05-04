@@ -227,7 +227,7 @@ const ContractManager = () => {
                 onClose={closeDrawer}
                 open={drawerOpen}
                 maskClosable={false}
-                destroyOnClose
+                destroyOnHidden
                 extra={
                     <Space>
                         <Button onClick={closeDrawer}>Hủy</Button>
