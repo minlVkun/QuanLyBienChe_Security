@@ -195,6 +195,10 @@ class AuthService {
 
         return { success: true, message: "Đặt lại mật khẩu thành công!" };
     }
+    static async logLogin(loginName, hostName, appName) {
+        // Chạy bất đồng bộ (Fire-and-forget), không đợi kết quả trả về
+        AuthModel.addLoginLog(loginName, hostName, appName);
+    }
 }
 
 module.exports = AuthService;

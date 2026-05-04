@@ -5,6 +5,14 @@ const login = async (req, res) => {
         const { username, password } = req.body;
         const result = await AuthService.login(username, password);
 
+        // --- GHI LOG ĐĂNG NHẬP (AUDIT LOG) ---
+        // Sử dụng fire-and-forget để không chặn response trả về cho user
+        const hostName = req.ip || req.connection.remoteAddress;
+        const appName = req.headers['user-agent'];
+        AuthService.logLogin(username, hostName, appName).catch(err => {
+            console.error('[Login Controller] Non-blocking log error:', err.message);
+        });
+
         res.json({
             success: true,
             data: result,

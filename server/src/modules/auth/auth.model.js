@@ -135,6 +135,34 @@ class AuthModel {
 
         return true;
     }
+    /**
+     * Ghi nhật ký đăng nhập (Login Audit Log).
+     * Được gọi bất đồng bộ sau khi login thành công.
+     * 
+     * @param {string} loginName
+     * @param {string} hostName
+     * @param {string} appName
+     */
+    static async addLoginLog(loginName, hostName, appName) {
+        try {
+            const pool = await poolPromise;
+            await pool.request()
+                .input('LoginName', sql.NVarChar(100), loginName)
+                .input('HostName', sql.NVarChar(100), hostName)
+                .input('AppName', sql.NVarChar(255), appName)
+                .query(`
+                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                    
+                    INSERT INTO [System].[LoginLogs] (LoginName, HostName, AppName, LoginTime)
+                    VALUES (@LoginName, @HostName, @AppName, GETDATE());
+                    
+                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                `);
+        } catch (err) {
+            // TUYỆT ĐỐI KHÔNG quăng lỗi (throw) ra ngoài để tránh làm sập luồng đăng nhập chính.
+            console.error('[CRITICAL-LOG] Failed to write LoginLog to DB:', err.message);
+        }
+    }
 }
 
 module.exports = AuthModel;
