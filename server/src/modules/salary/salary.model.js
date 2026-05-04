@@ -372,5 +372,26 @@ class SalaryModel {
         ];
         await DBHelper.queryWithContext(reqUser, query, inputs);
     }
+
+    static async getPayrollById(reqUser, id) {
+        const query = `SELECT * FROM Salary.BangLuong WHERE ID_BangLuong = @ID`;
+        const result = await DBHelper.queryWithContext(reqUser, query, [{ name: 'ID', type: sql.Int, value: id }]);
+        return result.recordset[0] || null;
+    }
+
+    static async getScaleByMa(reqUser, maNgach) {
+        const query = `SELECT * FROM Salary.NgachLuong WHERE MaNgach = @MaNgach`;
+        const result = await DBHelper.queryWithContext(reqUser, query, [{ name: 'MaNgach', type: sql.VarChar, value: maNgach }]);
+        return result.recordset[0] || null;
+    }
+
+    static async getStep(reqUser, maNgach, bacLuong) {
+        const query = `SELECT * FROM Salary.ChiTietNgachLuong WHERE MaNgach = @MaNgach AND BacLuong = @BacLuong`;
+        const result = await DBHelper.queryWithContext(reqUser, query, [
+            { name: 'MaNgach', type: sql.VarChar, value: maNgach },
+            { name: 'BacLuong', type: sql.Int, value: bacLuong }
+        ]);
+        return result.recordset[0] || null;
+    }
 }
 module.exports = SalaryModel;

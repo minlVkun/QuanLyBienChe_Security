@@ -1,4 +1,5 @@
 const DegreeModel = require('./degree.model');
+const AuditService = require('../audit/audit.service');
 const { createDegreeSchema, formatZodError } = require('./degree.validation');
 
 class DegreeService {
@@ -22,6 +23,14 @@ class DegreeService {
             const err = new Error("Thêm bằng cấp thất bại hoặc bạn không có quyền thực hiện thao tác này.");
             err.statusCode = 403; throw err;
         }
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'HR.BangCap',
+            Action: 'INSERT',
+            RecordID: data.MaNV, // Using MaNV as RecordID for degree records
+            NewData: validationResult.data
+        });
+
         return { message: "Thêm bằng cấp thành công" };
     }
 
@@ -31,11 +40,25 @@ class DegreeService {
             err.statusCode = 400; throw err;
         }
 
-        const affectedRows = await DegreeModel.delete(reqUser, idBang);
-        if (affectedRows === 0) {
+        const existing = await DegreeModel.getById(reqUser, idBang);
+        if (!existing) {
             const err = new Error("Bằng cấp không tồn tại hoặc bạn không có quyền thực hiện thao tác này.");
             err.statusCode = 404; throw err;
         }
+
+        const affectedRows = await DegreeModel.delete(reqUser, idBang);
+        if (affectedRows === 0) {
+            const err = new Error("Xóa bằng cấp thất bại.");
+            err.statusCode = 500; throw err;
+        }
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'HR.BangCap',
+            Action: 'DELETE',
+            RecordID: idBang,
+            OldData: existing
+        });
+
         return { message: "Xóa bằng cấp thành công" };
     }
 }

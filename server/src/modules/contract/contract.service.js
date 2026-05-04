@@ -1,5 +1,6 @@
 const ContractModel = require('./contract.model');
 const EmployeeModel = require('../employee/employee.model');
+const AuditService = require('../audit/audit.service');
 const { contractSchema, formatZodError } = require('./contract.validation');
 const fs = require('fs');
 
@@ -62,6 +63,14 @@ class ContractService {
             // 4. Lưu Database
             await ContractModel.create(reqUser, validData);
 
+            // Audit Log
+            await AuditService.logAction(reqUser, {
+                TableName: 'Salary.HopDong',
+                Action: 'INSERT',
+                RecordID: validData.MaHopDong,
+                NewData: validData
+            });
+
             return { success: true, message: "Thêm hợp đồng thành công" };
 
         } catch (error) {
@@ -104,6 +113,15 @@ class ContractService {
             // 4. Update Database
             await ContractModel.update(reqUser, maHopDong, validData);
 
+            // Audit Log
+            await AuditService.logAction(reqUser, {
+                TableName: 'Salary.HopDong',
+                Action: 'UPDATE',
+                RecordID: maHopDong,
+                OldData: existing,
+                NewData: validData
+            });
+
             return { success: true, message: "Cập nhật hợp đồng thành công" };
         } catch (error) {
             if (file) this.cleanupFile(file.path);
@@ -127,6 +145,14 @@ class ContractService {
 
         // 3. Delete from DB
         await ContractModel.delete(reqUser, maHopDong);
+
+        // Audit Log
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.HopDong',
+            Action: 'DELETE',
+            RecordID: maHopDong,
+            OldData: existing
+        });
 
         return { success: true, message: "Đã xóa hợp đồng" };
     }

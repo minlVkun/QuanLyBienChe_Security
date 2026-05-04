@@ -97,18 +97,24 @@ class AuditModel {
     /**
      * Ghi nhật ký thủ công cho các hành động không phải DML (ví dụ: Reveal, Export)
      */
-    static async logManualAction(reqUser, { tableName, action, recordID, oldData = null, newData = null }) {
+    static async logManualAction(reqUser, data) {
         try {
+            const tableName = data.tableName || data.TableName;
+            const action = data.action || data.Action;
+            const recordID = data.recordID || data.RecordID || null;
+            const oldData = data.oldData || data.OldData || null;
+            const newData = data.newData || data.NewData || null;
+
             const query = `
                 INSERT INTO [System].[Audit] (TableName, Action, RecordID, OldData, NewData, ChangedBy, ChangedDate)
-                VALUES (@tableName, @action, @recordID, @oldData, @newData, @changedBy, GETDATE())
+                VALUES (@tableName, @action, @recordID, @oldData, @newData, @changedBy, GETUTCDATE())
             `;
             const inputs = [
                 { name: 'tableName', type: sql.NVarChar, value: tableName },
                 { name: 'action',    type: sql.NVarChar, value: action },
-                { name: 'recordID',  type: sql.NVarChar, value: recordID },
-                { name: 'oldData',   type: sql.NVarChar, value: oldData ? JSON.stringify(oldData) : null },
-                { name: 'newData',   type: sql.NVarChar, value: newData ? JSON.stringify(newData) : null },
+                { name: 'recordID',  type: sql.NVarChar, value: recordID ? String(recordID) : null },
+                { name: 'oldData',   type: sql.NVarChar, value: oldData ? (typeof oldData === 'string' ? oldData : JSON.stringify(oldData)) : null },
+                { name: 'newData',   type: sql.NVarChar, value: newData ? (typeof newData === 'string' ? newData : JSON.stringify(newData)) : null },
                 { name: 'changedBy', type: sql.NVarChar, value: reqUser.MaNV || 'SYSTEM' }
             ];
 

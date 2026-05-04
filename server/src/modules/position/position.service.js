@@ -1,4 +1,5 @@
 const PositionModel = require('./position.model');
+const AuditService = require('../audit/audit.service');
 const { createPositionSchema, updatePositionSchema, formatZodError } = require('./position.validation');
 
 class PositionService {
@@ -32,10 +33,24 @@ class PositionService {
         }
 
         await PositionModel.create(reqUser, validData);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'HR.ChucVu',
+            Action: 'INSERT',
+            RecordID: validData.MaChucVu,
+            NewData: validData
+        });
+
         return { message: "Thêm chức vụ thành công." };
     }
 
     static async update(reqUser, id, data) {
+        const existing = await PositionModel.getById(reqUser, id);
+        if (!existing) {
+            const err = new Error("Chức vụ không tồn tại.");
+            err.statusCode = 404; throw err;
+        }
+
         const validationResult = updatePositionSchema.safeParse(data);
         if (!validationResult.success) {
             const err = new Error(formatZodError(validationResult.error));
@@ -43,12 +58,31 @@ class PositionService {
         }
 
         await PositionModel.update(reqUser, id, validationResult.data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'HR.ChucVu',
+            Action: 'UPDATE',
+            RecordID: id,
+            OldData: existing,
+            NewData: validationResult.data
+        });
+
         return { message: "Cập nhật chức vụ thành công." };
     }
 
     static async delete(reqUser, id) {
         try {
+            const existing = await PositionModel.getById(reqUser, id);
+            
             await PositionModel.delete(reqUser, id);
+
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.ChucVu',
+                Action: 'DELETE',
+                RecordID: id,
+                OldData: existing
+            });
+
             return { message: "Xóa chức vụ thành công." };
         } catch (error) {
             if (error.number === 547) {

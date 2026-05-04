@@ -1,6 +1,7 @@
 // src/services/salaryService.js
 const SalaryModel = require('./salary.model');
 const EmployeeModel = require('../employee/employee.model');
+const AuditService = require('../audit/audit.service');
 const { salarySchema, formatZodError } = require('./salary.validation');
 const { salaryScaleSchema, salaryStepSchema, formatZodError: formatScaleError } = require('./salaryScale.validation');
 
@@ -38,6 +39,14 @@ class SalaryService {
 
         try {
             const result = await SalaryModel.generatePayroll(reqUser, thangNam, LUONG_CO_SO, PHU_CAP_MAC_DINH, TY_LE_KHAU_TRU);
+            
+            await AuditService.logAction(reqUser, {
+                TableName: 'Salary.BangLuong',
+                Action: 'GENERATE_PAYROLL',
+                RecordID: thangNam,
+                NewData: { thangNam, LUONG_CO_SO, rowsProcessed: result.RowsInserted }
+            });
+
             return { 
                 message: `Đã chốt bảng lương tháng ${thangNam} thành công!`,
                 rowsProcessed: result.RowsInserted,
@@ -87,6 +96,14 @@ class SalaryService {
         
         // 3. Gọi Model lưu kết quả
         await SalaryModel.insertOrUpdateMonthlySalary(reqUser, salaryDataToSave);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BangLuong',
+            Action: 'UPSERT_PERSONAL',
+            RecordID: `${validData.maNhanVien}_${validData.thangNam}`,
+            NewData: salaryDataToSave
+        });
+
         return { message: "Chốt lương cá nhân thành công", data: salaryDataToSave };
     }
 
@@ -127,10 +144,21 @@ class SalaryService {
             const error = new Error(`Hệ số lương không khớp. Ngạch này yêu cầu hệ số ${validScale.HeSoLuong}.`);
             error.statusCode = 422; throw error;
         }
+
+        const oldSalary = await SalaryModel.getCurrentSalaryByMaNV(reqUser, data.MaNV);
         
         data.HeSoLuong = validScale.HeSoLuong;
 
         await SalaryModel.promoteSalary(reqUser, data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.DienBienLuong',
+            Action: 'PROMOTE',
+            RecordID: data.MaNV,
+            OldData: oldSalary,
+            NewData: data
+        });
+
         return { message: "Nâng bậc lương thành công!" };
     }
 
@@ -162,7 +190,24 @@ class SalaryService {
      */
     static async updatePayroll(reqUser, id, data) {
         if (!id) throw new Error("Thiếu ID bản ghi lương.");
-        return await SalaryModel.updatePayroll(reqUser, id, data);
+        
+        const existing = await SalaryModel.getPayrollById(reqUser, id);
+        if (!existing) {
+            const err = new Error("Bản ghi lương không tồn tại.");
+            err.statusCode = 404; throw err;
+        }
+
+        await SalaryModel.updatePayroll(reqUser, id, data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BangLuong',
+            Action: 'UPDATE',
+            RecordID: id,
+            OldData: existing,
+            NewData: data
+        });
+
+        return { success: true, message: "Cập nhật bảng lương thành công." };
     }
 
     /**
@@ -170,7 +215,23 @@ class SalaryService {
      */
     static async deletePayroll(reqUser, id) {
         if (!id) throw new Error("Thiếu ID bản ghi lương.");
-        return await SalaryModel.deletePayroll(reqUser, id);
+        
+        const existing = await SalaryModel.getPayrollById(reqUser, id);
+        if (!existing) {
+            const err = new Error("Bản ghi lương không tồn tại.");
+            err.statusCode = 404; throw err;
+        }
+
+        await SalaryModel.deletePayroll(reqUser, id);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BangLuong',
+            Action: 'DELETE',
+            RecordID: id,
+            OldData: existing
+        });
+
+        return { success: true, message: "Đã xóa bảng lương." };
     }
 
     // --- QUẢN LÝ NGẠCH LƯƠNG ---
@@ -189,22 +250,56 @@ class SalaryService {
         }
 
         await SalaryModel.createScale(reqUser, validation.data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.NgachLuong',
+            Action: 'INSERT',
+            RecordID: validation.data.MaNgach,
+            NewData: validation.data
+        });
+
         return { success: true, message: "Thêm ngạch lương mới thành công!" };
     }
 
     static async updateScale(reqUser, maNgach, data) {
+        const existing = await SalaryModel.findScaleByMa(reqUser, maNgach);
+
         const validation = salaryScaleSchema.partial().safeParse(data);
         if (!validation.success) {
             const err = new Error(formatScaleError(validation.error));
             err.statusCode = 400; throw err;
         }
         await SalaryModel.updateScale(reqUser, maNgach, validation.data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.NgachLuong',
+            Action: 'UPDATE',
+            RecordID: maNgach,
+            OldData: existing,
+            NewData: validation.data
+        });
+
         return { success: true, message: "Cập nhật ngạch lương thành công!" };
     }
 
     static async deleteScale(reqUser, maNgach) {
         if (!maNgach) throw new Error("Thiếu mã ngạch cần xóa!");
+        
+        const existing = await SalaryModel.getScaleByMa(reqUser, maNgach);
+        if (!existing) {
+            const err = new Error("Ngạch lương không tồn tại.");
+            err.statusCode = 404; throw err;
+        }
+
         await SalaryModel.deleteScale(reqUser, maNgach);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.NgachLuong',
+            Action: 'DELETE',
+            RecordID: maNgach,
+            OldData: existing
+        });
+
         return { success: true, message: "Đã xóa ngạch lương!" };
     }
 
@@ -225,12 +320,35 @@ class SalaryService {
         }
 
         await SalaryModel.addStep(reqUser, validation.data);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.ChiTietNgachLuong',
+            Action: 'INSERT',
+            RecordID: `${validation.data.MaNgach}_${validation.data.BacLuong}`,
+            NewData: validation.data
+        });
+
         return { success: true, message: "Thêm bậc lương mới thành công!" };
     }
 
     static async deleteStep(reqUser, maNgach, bacLuong) {
         if (!maNgach || !bacLuong) throw new Error("Thiếu thông tin để xóa bậc lương!");
+        
+        const existing = await SalaryModel.getStep(reqUser, maNgach, bacLuong);
+        if (!existing) {
+            const err = new Error("Bậc lương không tồn tại.");
+            err.statusCode = 404; throw err;
+        }
+
         await SalaryModel.deleteStep(reqUser, maNgach, bacLuong);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.ChiTietNgachLuong',
+            Action: 'DELETE',
+            RecordID: `${maNgach}_${bacLuong}`,
+            OldData: existing
+        });
+
         return { success: true, message: "Đã xóa bậc lương!" };
     }
 }

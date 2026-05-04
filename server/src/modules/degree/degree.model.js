@@ -3,6 +3,12 @@ const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class DegreeModel {
+    static async getById(reqUser, idBang) {
+        const query = 'SELECT * FROM [HR].[BangCap] WHERE ID_Bang = @ID_Bang';
+        const inputs = [{ name: 'ID_Bang', type: sql.Int, value: idBang }];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
+        return result.recordset[0] || null;
+    }
     // Lấy danh sách bằng cấp của một nhân viên cụ thể
     static async getByMaNV(reqUser, maNV) {
         const query = 'SELECT * FROM [HR].[BangCap] WHERE MaNV = @MaNV';

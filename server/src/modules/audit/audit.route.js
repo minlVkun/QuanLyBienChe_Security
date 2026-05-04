@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auditController = require('./audit.controller');
 const { authorize } = require('../../middlewares/authMiddleware');
+const { rlsMiddleware } = require('../../middlewares/rlsMiddleware');
 
 /**
  * @swagger
@@ -65,7 +66,7 @@ const { authorize } = require('../../middlewares/authMiddleware');
  */
 
 // Chỉ cho phép Admin tối cao truy cập để giám sát hệ thống
-router.get('/', authorize(['db_Admin']), auditController.getAllLogs);
-router.get('/:id', authorize(['db_Admin']), auditController.getLogDetail);
+router.get('/', authorize(['db_Admin']), rlsMiddleware, auditController.getAllLogs);
+router.get('/:id', authorize(['db_Admin']), rlsMiddleware, auditController.getLogDetail);
 
 module.exports = router;

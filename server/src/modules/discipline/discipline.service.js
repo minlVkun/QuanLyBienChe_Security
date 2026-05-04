@@ -1,4 +1,5 @@
 const DisciplineModel = require('./discipline.model');
+const AuditService = require('../audit/audit.service');
 const { disciplineSchema, formatZodError } = require('./discipline.validation');
 
 class DisciplineService {
@@ -30,6 +31,13 @@ class DisciplineService {
                 err.statusCode = 400;
                 throw err;
             }
+
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.KhenThuongKyLuat',
+                Action: 'INSERT',
+                RecordID: cleanData.MaNV,
+                NewData: cleanData
+            });
             
             return rowsAffected;
         } catch (error) {
@@ -53,6 +61,8 @@ class DisciplineService {
         }
 
         try {
+            const existing = await DisciplineModel.getById(reqUser, id);
+            
             const rowsAffected = await DisciplineModel.delete(reqUser, id);
             
             if (rowsAffected === 0) {
@@ -60,6 +70,13 @@ class DisciplineService {
                 err.statusCode = 404;
                 throw err;
             }
+
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.KhenThuongKyLuat',
+                Action: 'DELETE',
+                RecordID: id,
+                OldData: existing
+            });
             
             return rowsAffected;
         } catch (error) {

@@ -1,4 +1,5 @@
 const UserModel = require('./user.model');
+const AuditService = require('../audit/audit.service');
 const bcrypt = require('bcryptjs');
 const { updateUserSchema, resetPasswordSchema, formatZodError } = require('./user.validation');
 
@@ -37,6 +38,17 @@ class UserService {
         }
 
         const affectedRows = await UserModel.updateRoleAndStatus(reqUser, id, validationResult.data);
+        
+        if (affectedRows > 0) {
+            await AuditService.logAction(reqUser, {
+                TableName: 'System.User',
+                Action: 'UPDATE',
+                RecordID: id,
+                OldData: user,
+                NewData: validationResult.data
+            });
+        }
+
         return affectedRows > 0;
     }
 
@@ -60,7 +72,19 @@ class UserService {
         // Chuyển chuỗi hash thành Buffer để lưu vào VARBINARY
         const passwordBuffer = Buffer.from(hashedPassword, 'utf-8');
 
-        return await UserModel.updatePassword(reqUser, id, passwordBuffer);
+        const success = await UserModel.updatePassword(reqUser, id, passwordBuffer);
+        
+        if (success) {
+            await AuditService.logAction(reqUser, {
+                TableName: 'System.User',
+                Action: 'RESET_PASSWORD',
+                RecordID: id,
+                OldData: { UserID: id, Username: user.Username },
+                NewData: { PasswordReset: true }
+            });
+        }
+
+        return success;
     }
 }
 

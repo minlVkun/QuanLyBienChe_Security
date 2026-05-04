@@ -2,6 +2,11 @@ const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class DepartmentModel {
+    static async getById(reqUser, id) {
+        const query = `SELECT * FROM [HR].[DonVi] WHERE MaDonVi = @ID`;
+        const result = await DBHelper.queryWithContext(reqUser, query, [{ name: 'ID', type: sql.VarChar, value: id }]);
+        return result.recordset[0] || null;
+    }
     /**
      * Lấy danh sách đơn vị để vẽ sơ đồ tổ chức
      */

@@ -2,6 +2,12 @@ const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class DisciplineModel {
+    static async getById(reqUser, id) {
+        const query = `SELECT * FROM [HR].[KhenThuongKyLuat] WHERE ID_KTKL = @ID_KTKL`;
+        const inputs = [{ name: 'ID_KTKL', type: sql.Int, value: id }];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
+        return result.recordset[0] || null;
+    }
     // Lấy danh sách khen thưởng/kỷ luật của một nhân viên
     static async getByMaNV(reqUser, maNV) {
         const query = `

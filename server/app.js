@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 // Centralized Route Registration
 registerRoutes(app);
 
+
 // Cho phép truy cập file tĩnh trong thư mục uploads
 app.use('/uploads', express.static('uploads'));
 // --- SWAGGER ---

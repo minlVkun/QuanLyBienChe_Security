@@ -1,5 +1,6 @@
 //src/services/employeeService.js
 const EmployeeModel = require('./employee.model');
+const AuditService = require('../audit/audit.service');
 const bcrypt = require('bcryptjs');
 const dayjs = require('dayjs');
 const { poolPromise, sql } = require('../../config/db');
@@ -115,6 +116,15 @@ class EmployeeService {
 
             // Xác nhận và lưu vào DB
             await transaction.commit();
+
+            // Audit Log
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.NhanVien_Internal',
+                Action: 'INSERT',
+                RecordID: newEmployee.MaNV,
+                NewData: { ...rawData, PasswordHash: '********' } // Mask password hash in logs
+            });
+
             return newEmployee;
         } catch (error) {
             // Hủy bỏ toàn bộ quá trình nếu có lỗi
@@ -128,6 +138,12 @@ class EmployeeService {
         
         // 1. Kiểm tra MaNV đầu vào
         if (!maNV) throw Object.assign(new Error("Mã nhân viên không hợp lệ."), { status: 400 });
+
+        // Fetch old data for audit
+        const existing = await EmployeeModel.getById(reqUser, maNV);
+        if (!existing) {
+            throw Object.assign(new Error("Nhân viên không tồn tại."), { status: 404 });
+        }
 
         // 2. Validate dữ liệu đầu vào bằng Zod
         const validationResult = updateEmployeeSchema.safeParse(rawData);
@@ -147,6 +163,18 @@ class EmployeeService {
         const affectedRows = await EmployeeModel.UpdateEmployee(reqUser, maNV, updateData);
         
         console.log(`[Service - updateEmployee] Kết quả: ${affectedRows} dòng bị tác động.`);
+
+        // Audit Log
+        if (affectedRows > 0) {
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.NhanVien_Internal',
+                Action: 'UPDATE',
+                RecordID: maNV,
+                OldData: existing,
+                NewData: updateData
+            });
+        }
+
         return affectedRows;
     }
 
@@ -160,7 +188,20 @@ class EmployeeService {
             throw Object.assign(new Error("Bạn không thể tự xóa tài khoản của chính mình."), { status: 400 });
         }
 
+        const existing = await EmployeeModel.getById(reqUser, maNV);
+
         const affectedRows = await EmployeeModel.softDelete(reqUser, maNV);
+
+        // Audit Log
+        if (affectedRows > 0) {
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.NhanVien_Internal',
+                Action: 'SOFT_DELETE',
+                RecordID: maNV,
+                OldData: existing
+            });
+        }
+
         return affectedRows;
     }
 }

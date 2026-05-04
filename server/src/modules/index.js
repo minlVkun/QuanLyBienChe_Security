@@ -15,7 +15,9 @@ function registerRoutes(app) {
   app.use('/api/work-history', require('./workHistory/workHistory.route'));
   app.use('/api/insurance', require('./insurance/insurance.route'));
   app.use('/api/insurance-log', require('./insuranceLog/insuranceLog.route'));
+  
   app.use('/api/allowances', require('./allowance/allowance.route'));
+  
   app.use('/api/login-logs', require('./loginLog/loginLog.route'));
   app.use('/api/configs', require('./systemConfig/config.route'));
 }

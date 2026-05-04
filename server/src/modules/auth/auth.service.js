@@ -1,4 +1,5 @@
 const AuthModel = require('./auth.model');
+const AuditService = require('../audit/audit.service');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -63,7 +64,7 @@ class AuthService {
             err.statusCode = 400;
             throw err;
         }
-        
+
         const user = await AuthModel.getUserByUsername(username);
         if (!user) {
             const err = new Error('Người dùng không tồn tại');
@@ -109,8 +110,9 @@ class AuthService {
      * @param {number} userID - Lấy từ req.user.UserID (server-side, không từ client)
      * @param {string} oldPassword
      * @param {string} newPassword
+     * @param {object} reqUser - Thông tin user thực hiện đổi (thường là chính họ)
      */
-    static async changePassword(userID, oldPassword, newPassword) {
+    static async changePassword(userID, oldPassword, newPassword, reqUser) {
         // Bước 1: Validate input
         const validationResult = changePasswordSchema.safeParse({ oldPassword, newPassword });
         if (!validationResult.success) {
@@ -126,7 +128,7 @@ class AuthService {
             .input('UserID', require('../../config/db').sql.Int, userID)
             .query(`
                 EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
-                SELECT UserID, PasswordHash, TrangThai FROM [System].[User] WHERE UserID = @UserID;
+                SELECT UserID, Username, PasswordHash, TrangThai FROM [System].[User] WHERE UserID = @UserID;
                 EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
             `);
 
@@ -152,11 +154,20 @@ class AuthService {
         const passwordBuffer = Buffer.from(hashedNew, 'utf-8');
 
         await AuthModel.updatePassword(userID, passwordBuffer);
+
+        // Audit Log
+        await AuditService.logAction(reqUser, {
+            TableName: 'System.User',
+            Action: 'CHANGE_PASSWORD',
+            RecordID: userID,
+            OldData: { UserID: userID, Username: user.Username },
+            NewData: { PasswordChanged: true }
+        });
     }
 
     static async forgotPassword(email) {
         if (!email) throw new Error("Vui lòng nhập email!");
-        
+
         const user = await AuthModel.getUserByEmail(email);
         if (!user) {
             return { success: true, message: "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết đặt lại mật khẩu." };
@@ -165,9 +176,9 @@ class AuthService {
         const rawToken = crypto.randomBytes(32).toString('hex');
         // Hash token trước khi lưu vào DB (Security Warning Fix)
         const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-        
+
         await AuthModel.saveResetToken(user.UserID, hashedToken);
-        
+
         // Gửi email với rawToken
         await mailHelper.sendResetPasswordEmail(email, rawToken);
 
@@ -193,12 +204,21 @@ class AuthService {
         await AuthModel.updatePassword(resetData.UserID, passwordBuffer);
         await AuthModel.markTokenUsed(hashedToken);
 
+        // Audit Log (Since we don't have reqUser here, we use a SYSTEM marker)
+        await AuditService.logAction({ MaNV: 'SYSTEM' }, {
+            TableName: 'System.User',
+            Action: 'RESET_PASSWORD_VIA_TOKEN',
+            RecordID: resetData.UserID,
+            NewData: { PasswordReset: true }
+        });
+
         return { success: true, message: "Đặt lại mật khẩu thành công!" };
     }
     static async logLogin(loginName, hostName, appName) {
         // Chạy bất đồng bộ (Fire-and-forget), không đợi kết quả trả về
         AuthModel.addLoginLog(loginName, hostName, appName);
     }
+
 }
 
 module.exports = AuthService;

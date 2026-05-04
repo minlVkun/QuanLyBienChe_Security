@@ -154,7 +154,7 @@ class AuthModel {
                     EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
                     
                     INSERT INTO [System].[LoginLogs] (LoginName, HostName, AppName, LoginTime)
-                    VALUES (@LoginName, @HostName, @AppName, GETDATE());
+                    VALUES (@LoginName, @HostName, @AppName, GETUTCDATE());
                     
                     EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
                 `);

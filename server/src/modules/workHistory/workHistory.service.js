@@ -1,12 +1,11 @@
 const WorkHistoryModel = require('./workHistory.model');
 const EmployeeModel = require('../employee/employee.model');
-const AuditModel = require('../audit/audit.model');
+const AuditService = require('../audit/audit.service');
 const { createWorkHistorySchema, transferSchema, formatZodError } = require('./workHistory.validation');
 const { poolPromise, sql } = require('../../config/db');
 
 class WorkHistoryService {
     static async getWorkHistory(reqUser, maNV) {
-        // ... (giữ nguyên code cũ)
         if (!maNV) {
             const err = new Error("Mã nhân viên là bắt buộc.");
             err.statusCode = 400; throw err;
@@ -30,6 +29,7 @@ class WorkHistoryService {
      * 5. Ghi Audit Log
      */
     static async transfer(reqUser, transferData) {
+        // ... (existing transfer logic remains same as it has its own audit implementation)
         // 1. Validation
         const validation = transferSchema.safeParse(transferData);
         if (!validation.success) {
@@ -70,17 +70,16 @@ class WorkHistoryService {
             });
 
             // Bước 5: Ghi Audit Log (Giả sử AuditModel có hỗ trợ transaction request)
-            // Nếu chưa có, ta có thể viết trực tiếp SQL vào đây
             const auditQuery = `
                 INSERT INTO [System].[Audit] (TableName, Action, OldData, NewData, ChangedBy, ChangedDate, RecordID)
                 VALUES (@TableName, @Action, @OldData, @NewData, @ChangedBy, GETDATE(), @RecordID)
             `;
             const auditRequest = transaction.request();
-            auditRequest.input('TableName', sql.NVarChar, 'HR.NhanVien');
+            auditRequest.input('TableName', sql.NVarChar, 'HR.QuaTrinhCongTac');
             auditRequest.input('Action', sql.NVarChar, 'TRANSFER');
             auditRequest.input('OldData', sql.NVarChar, JSON.stringify({ MaDonVi: oldUser.MaDonVi, MaChucVu: oldUser.MaChucVu }));
             auditRequest.input('NewData', sql.NVarChar, JSON.stringify({ MaDonVi: newMaDonVi, MaChucVu: newMaChucVu, LyDo: lyDo }));
-            auditRequest.input('ChangedBy', sql.VarChar, reqUser.MaNV);
+            auditRequest.input('ChangedBy', sql.VarChar, reqUser.MaNV || 'SYSTEM');
             auditRequest.input('RecordID', sql.NVarChar, targetMaNV);
             await auditRequest.query(auditQuery);
 
@@ -96,7 +95,6 @@ class WorkHistoryService {
     }
 
     static async create(reqUser, data) {
-        // ... (giữ nguyên code cũ)
         const validationResult = createWorkHistorySchema.safeParse(data);
         if (!validationResult.success) {
             const err = new Error(formatZodError(validationResult.error));
@@ -112,6 +110,14 @@ class WorkHistoryService {
         }
 
         const result = await WorkHistoryModel.create(reqUser, validData);
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'HR.QuaTrinhCongTac',
+            Action: 'INSERT',
+            RecordID: validData.MaNV,
+            NewData: validData
+        });
+
         return result;
     }
 }

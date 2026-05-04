@@ -22,6 +22,27 @@ class DepartmentController {
     }
 
     /**
+     * Lấy thông tin trưởng phòng hiện tại của đơn vị
+     */
+    static async getDeptHead(req, res) {
+        try {
+            const { id } = req.params;
+            const data = await DepartmentService.getDeptHead(req.user, id);
+            return res.status(200).json({
+                success: true,
+                data: data
+            });
+        } catch (err) {
+            console.error(`[Controller Error - getDeptHead]:`, err.message);
+            const statusCode = err.statusCode || 500;
+            return res.status(statusCode).json({ 
+                success: false, 
+                message: err.message || "Lỗi máy chủ khi lấy thông tin lãnh đạo." 
+            });
+        }
+    }
+
+    /**
      * Thay đổi trưởng phòng đơn vị
      */
     static async changeDeptHead(req, res) {

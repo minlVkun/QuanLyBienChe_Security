@@ -55,7 +55,7 @@ const reauth = async (req, res) => {
 const changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        await AuthService.changePassword(req.user.UserID, oldPassword, newPassword);
+        await AuthService.changePassword(req.user.UserID, oldPassword, newPassword, req.user);
 
         res.json({
             success: true,

@@ -1,4 +1,5 @@
 const InsuranceModel = require('./insurance.model');
+const AuditService = require('../audit/audit.service');
 const { updateInsuranceSchema, formatZodError } = require('./insurance.validation');
 
 class InsuranceService {
@@ -23,6 +24,12 @@ class InsuranceService {
             err.statusCode = 400; throw err;
         }
 
+        const existing = await InsuranceModel.getInsurance(reqUser, maNV);
+        if (!existing) {
+            const err = new Error("Không tìm thấy thông tin bảo hiểm để cập nhật.");
+            err.statusCode = 404; throw err;
+        }
+
         const validationResult = updateInsuranceSchema.safeParse(data);
         if (!validationResult.success) {
             const err = new Error(formatZodError(validationResult.error));
@@ -34,6 +41,14 @@ class InsuranceService {
             const err = new Error("Không tìm thấy nhân viên hoặc nhân viên không tồn tại");
             err.statusCode = 404; throw err;
         }
+
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BaoHiem',
+            Action: 'UPDATE',
+            RecordID: maNV,
+            OldData: existing,
+            NewData: validationResult.data
+        });
 
         return { message: "Cập nhật thông tin bảo hiểm thành công" };
     }

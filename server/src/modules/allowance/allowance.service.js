@@ -23,8 +23,8 @@ class AllowanceService {
         await AuditService.logAction(reqUser, {
             TableName: 'HR.PhuCapCoDinh',
             Action: 'INSERT',
-            Description: `Thêm phụ cấp ${data.TenPhuCap} cho NV ${maNV}`,
-            NewData: JSON.stringify(data)
+            RecordID: maNV,
+            NewData: data
         });
 
         return { success: true, message: "Thêm phụ cấp cố định thành công!" };
@@ -34,6 +34,12 @@ class AllowanceService {
         if (!data.TenPhuCap || data.SoTien < 0) {
             const err = new Error("Dữ liệu không hợp lệ!");
             err.statusCode = 400; throw err;
+        }
+
+        const existing = await AllowanceModel.getById(reqUser, id);
+        if (!existing) {
+            const err = new Error("Không tìm thấy phụ cấp để cập nhật.");
+            err.statusCode = 404; throw err;
         }
 
         // FIX: Check duplicate when update
@@ -48,20 +54,28 @@ class AllowanceService {
         await AuditService.logAction(reqUser, {
             TableName: 'HR.PhuCapCoDinh',
             Action: 'UPDATE',
-            Description: `Cập nhật phụ cấp ID ${id}`,
-            NewData: JSON.stringify(data)
+            RecordID: id,
+            OldData: existing,
+            NewData: data
         });
 
         return { success: true, message: "Cập nhật phụ cấp thành công!" };
     }
 
     static async delete(reqUser, id) {
+        const existing = await AllowanceModel.getById(reqUser, id);
+        if (!existing) {
+            const err = new Error("Không tìm thấy phụ cấp để xóa.");
+            err.statusCode = 404; throw err;
+        }
+
         await AllowanceModel.delete(reqUser, id);
 
         await AuditService.logAction(reqUser, {
             TableName: 'HR.PhuCapCoDinh',
             Action: 'DELETE',
-            Description: `Xóa phụ cấp ID ${id}`
+            RecordID: id,
+            OldData: existing
         });
 
         return { success: true, message: "Đã xóa phụ cấp cố định!" };

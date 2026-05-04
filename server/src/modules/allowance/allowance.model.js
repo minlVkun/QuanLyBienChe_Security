@@ -2,8 +2,14 @@ const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class AllowanceModel {
+    static async getById(reqUser, id) {
+        const query = `SELECT * FROM HR.PhuCapCoDinh WHERE ID_PhuCap = @Id`;
+        const inputs = [{ name: 'Id', type: sql.Int, value: id }];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
+        return result.recordset[0] || null;
+    }
     static async getByEmployeeId(reqUser, maNV) {
-        const query = `SELECT * FROM HR.PhuCapCoDinh WHERE MaNV = @MaNV ORDER BY CreatedAt DESC`;
+        const query = `SELECT ID_PhuCap as Id, TenPhuCap, SoTien, IsActive, NgayTao FROM HR.PhuCapCoDinh WHERE MaNV = @MaNV ORDER BY NgayTao DESC`;
         const inputs = [{ name: 'MaNV', type: sql.VarChar, value: maNV }];
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
@@ -16,7 +22,7 @@ class AllowanceModel {
             { name: 'TenPhuCap', type: sql.NVarChar, value: tenPhuCap }
         ];
         if (excludeId) {
-            query += ` AND Id <> @Id`;
+            query += ` AND ID_PhuCap <> @Id`;
             inputs.push({ name: 'Id', type: sql.Int, value: excludeId });
         }
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
@@ -41,7 +47,7 @@ class AllowanceModel {
         const query = `
             UPDATE HR.PhuCapCoDinh
             SET TenPhuCap = @TenPhuCap, SoTien = @SoTien, IsActive = @IsActive
-            WHERE Id = @Id
+            WHERE ID_PhuCap = @Id
         `;
         const inputs = [
             { name: 'Id', type: sql.Int, value: id },
@@ -53,7 +59,7 @@ class AllowanceModel {
     }
 
     static async delete(reqUser, id) {
-        const query = `DELETE FROM HR.PhuCapCoDinh WHERE Id = @Id`;
+        const query = `DELETE FROM HR.PhuCapCoDinh WHERE ID_PhuCap = @Id`;
         const inputs = [{ name: 'Id', type: sql.Int, value: id }];
         await DBHelper.queryWithContext(reqUser, query, inputs);
     }

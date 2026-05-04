@@ -72,6 +72,7 @@ router.put('/:id', authorize(['db_Admin', 'db_HR_Human']), departmentController.
 router.delete('/:id', authorize(['db_Admin', 'db_HR_Human']), departmentController.delete);
 
 // Cập nhật trưởng phòng
+router.get('/:id/head', authorize(), departmentController.getDeptHead);
 router.put('/:id/head', authorize(['db_Admin', 'db_HR_Human']), departmentController.changeDeptHead);
 
 module.exports = router;

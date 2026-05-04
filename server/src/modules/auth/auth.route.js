@@ -1,28 +1,19 @@
 const express = require('express');
 const router = express.Router();
-
 const authController = require('./auth.controller');
 const { authorize } = require('../../middlewares/authMiddleware');
-const rateLimit = require('express-rate-limit');
+const { loginLimiter, forgotPasswordLimiter } = require('../../middlewares/rateLimitMiddleware');
 
-// Rate limit cho chức năng quên mật khẩu (chống spam mail)
-const forgotPasswordLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 phút
-    max: 5, // 5 lần thử
-    message: { success: false, message: "Quá nhiều yêu cầu, vui lòng thử lại sau 15 phút." }
-});
+// Đăng nhập (Chống Brute-force)
+router.post('/login', loginLimiter, authController.login);
 
-// Đăng nhập (Public — không cần token)
-router.post('/login', authController.login);
-
-// Xác thực lại để lấy Reveal Token (Public — giải quyết Deadlock khi token hết hạn)
+// Xác thực lại để lấy Reveal Token (Giải quyết Deadlock khi token hết hạn)
 router.post('/reauth', authController.reauth);
 
-// Đổi mật khẩu (Protected — authorize() không truyền roles = mọi user đã đăng nhập)
-// UserID được lấy từ req.user do server gán — không tin client tự khai
+// Đổi mật khẩu (Protected - Yêu cầu đăng nhập)
 router.post('/change-password', authorize(), authController.changePassword);
 
-// Quên & Đặt lại mật khẩu (Public)
+// Quên & Đặt lại mật khẩu (Chống Spam Email)
 router.post('/forgot-password', forgotPasswordLimiter, authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
