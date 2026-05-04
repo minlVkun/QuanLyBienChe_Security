@@ -4,8 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --no-deprecation app.js"  
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch",
+    "start": "node --no-deprecation app.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterFramework": [
+      "dotenv/config"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -14,12 +21,17 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "dayjs": "^1.11.20",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.4.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "msnodesqlv8": "^5.1.9",
     "mssql": "^12.2.1",
+    "multer": "^2.1.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.3.6"
   }
 }
