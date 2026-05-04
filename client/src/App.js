@@ -11,7 +11,8 @@ import UserManagement from './pages/UserManagement';
 import PayrollManagement from './pages/PayrollManagement';
 import Profile from './pages/Profile';
 import PositionList from './pages/PositionList';
-import SalaryScaleList from './pages/SalaryScaleList';
+import SalaryScaleList from '.
+/pages/SalaryScaleList';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoginLogs from './pages/LoginLogs';
@@ -37,7 +38,7 @@ function App() {
 
           {/* Trang hồ sơ cá nhân: Mọi role */}
           <Route path="profile" element={<Profile />} />
-          
+
           {/* Quản lý nhân sự: Chỉ Admin, HR và Trưởng phòng */}
           <Route path="employees" element={
             <ProtectedRoute>
