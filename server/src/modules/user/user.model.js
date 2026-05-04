@@ -48,19 +48,24 @@ class UserModel {
     }
 
     /**
-     * Cập nhật Role và Trạng thái
+     * Cập nhật Role và Trạng thái (Đã tích hợp Audit Reason)
      */
-    static async updateRoleAndStatus(reqUser, id, { RoleName, TrangThai }) {
+    static async updateRoleAndStatus(reqUser, id, { RoleName, TrangThai, Reason = '' }) {
         const query = `
+            -- Bơm lý do vào context để Trigger có thể lấy ra
+            EXEC sp_set_session_context @key = N'AuditReason', @value = @Reason, @read_only = 0;
+
             UPDATE [System].[User]
             SET RoleName = @RoleName, TrangThai = @TrangThai
             WHERE UserID = @UserID;
+            
             SELECT @@ROWCOUNT AS AffectedRows;
         `;
         const inputs = [
             { name: 'UserID', type: sql.Int, value: id },
             { name: 'RoleName', type: sql.NVarChar, value: RoleName },
-            { name: 'TrangThai', type: sql.Int, value: TrangThai }
+            { name: 'TrangThai', type: sql.Int, value: TrangThai },
+            { name: 'Reason', type: sql.NVarChar, value: Reason }
         ];
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         const affectedRows = result.recordset[0].AffectedRows;
