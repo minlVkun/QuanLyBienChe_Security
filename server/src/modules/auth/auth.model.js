@@ -160,7 +160,7 @@ class AuthModel {
                 `);
         } catch (err) {
             // TUYỆT ĐỐI KHÔNG quăng lỗi (throw) ra ngoài để tránh làm sập luồng đăng nhập chính.
-            console.error('[CRITICAL-LOG] Failed to write LoginLog to DB:', err.message);
+            console.error('[Audit Debug] ❌ Lỗi lưu DB:', err);
         }
     }
 }
