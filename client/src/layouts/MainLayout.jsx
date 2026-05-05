@@ -19,7 +19,8 @@ import {
   Briefcase,
   Layers,
   Menu as MenuIcon,
-  LogIn
+  LogIn,
+  Clock
 } from 'lucide-react';
 
 
@@ -64,6 +65,11 @@ const MainLayout = () => {
       key: '/employees',
       icon: <Users size={18} />,
       label: <Link to="/employees">Danh sách nhân viên</Link>,
+    },
+    {
+      key: '/attendance',
+      icon: <Clock size={18} />,
+      label: <Link to="/attendance">Chấm công</Link>,
     },
     {
       key: '/departments',

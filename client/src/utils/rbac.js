@@ -39,6 +39,7 @@ export const MENU_PERMISSIONS = {
   '/configs': [ROLES.ADMIN],
   '/positions': [ROLES.ADMIN, ROLES.HR_HUMAN],
   '/salary-scales': [ROLES.ADMIN, ROLES.HR_HUMAN],
+  '/attendance': null, // Tất cả (Check-in/out)
 };
 
 // ─── Phân quyền Tabs trong Chi tiết nhân viên ─────────────────────────────────

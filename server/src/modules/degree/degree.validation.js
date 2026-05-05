@@ -8,8 +8,15 @@ const createDegreeSchema = z.object({
     NamTotNghiep: z.number().int().min(1900, "Năm tốt nghiệp không hợp lệ")
 });
 
+const updateDegreeSchema = z.object({
+    LoaiBang: z.string().min(1, "Loại bằng là bắt buộc").optional(),
+    ChuyenNganh: z.string().min(1, "Chuyên ngành là bắt buộc").optional(),
+    NoiDaoTao: z.string().min(1, "Nơi đào tạo là bắt buộc").optional(),
+    NamTotNghiep: z.number().int().min(1900, "Năm tốt nghiệp không hợp lệ").optional()
+});
+
 const formatZodError = (error) => {
     return error.errors.map(err => err.message).join(', ');
 };
 
-module.exports = { createDegreeSchema, formatZodError };
+module.exports = { createDegreeSchema, updateDegreeSchema, formatZodError };

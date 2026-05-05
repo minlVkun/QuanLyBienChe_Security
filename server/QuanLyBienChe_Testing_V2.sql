@@ -1,6 +1,6 @@
 USE [master]
 GO
-/****** Object:  Database [QuanLyBienChe_Testing_V2]    Script Date: 04/05/2026 02:50:01 PM ******/
+/****** Object:  Database [QuanLyBienChe_Testing_V2]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE DATABASE [QuanLyBienChe_Testing_V2]
  CONTAINMENT = NONE
  ON  PRIMARY 
@@ -84,37 +84,37 @@ ALTER DATABASE [QuanLyBienChe_Testing_V2] SET QUERY_STORE (OPERATION_MODE = READ
 GO
 USE [QuanLyBienChe_Testing_V2]
 GO
-/****** Object:  User [HR_Payroll]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [HR_Payroll]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [HR_Payroll] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  User [HR_Human]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [HR_Human]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [HR_Human] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  User [Employee]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [Employee]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [Employee] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  User [DeptHead]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [DeptHead]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [DeptHead] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  User [AppBackendUser]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [AppBackendUser]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [AppBackendUser] FOR LOGIN [AppBackendUser] WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  User [Admin]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  User [Admin]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE USER [Admin] WITHOUT LOGIN WITH DEFAULT_SCHEMA=[dbo]
 GO
-/****** Object:  DatabaseRole [db_HR_Payroll]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  DatabaseRole [db_HR_Payroll]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE ROLE [db_HR_Payroll]
 GO
-/****** Object:  DatabaseRole [db_HR_Human]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  DatabaseRole [db_HR_Human]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE ROLE [db_HR_Human]
 GO
-/****** Object:  DatabaseRole [db_Employee]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  DatabaseRole [db_Employee]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE ROLE [db_Employee]
 GO
-/****** Object:  DatabaseRole [db_DeptHead]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  DatabaseRole [db_DeptHead]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE ROLE [db_DeptHead]
 GO
-/****** Object:  DatabaseRole [db_Admin]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  DatabaseRole [db_Admin]    Script Date: 05/05/2026 07:51:08 AM ******/
 CREATE ROLE [db_Admin]
 GO
 ALTER ROLE [db_HR_Payroll] ADD MEMBER [HR_Payroll]
@@ -127,19 +127,19 @@ ALTER ROLE [db_DeptHead] ADD MEMBER [DeptHead]
 GO
 ALTER ROLE [db_Admin] ADD MEMBER [Admin]
 GO
-/****** Object:  Schema [HR]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Schema [HR]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SCHEMA [HR]
 GO
-/****** Object:  Schema [Salary]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Schema [Salary]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SCHEMA [Salary]
 GO
-/****** Object:  Schema [Security]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Schema [Security]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SCHEMA [Security]
 GO
-/****** Object:  Schema [System]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Schema [System]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SCHEMA [System]
 GO
-/****** Object:  UserDefinedFunction [Security].[fn_MaskData]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  UserDefinedFunction [Security].[fn_MaskData]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -169,7 +169,7 @@ BEGIN
     RETURN '*******';
 END
 GO
-/****** Object:  ColumnMasterKey [CMK_HRM_Auto]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  ColumnMasterKey [CMK_HRM_Auto]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE COLUMN MASTER KEY [CMK_HRM_Auto]
 WITH
 (
@@ -177,7 +177,7 @@ WITH
 	KEY_PATH = N'LocalMachine/My/1543F019200AA3DF1763B80940346357AA9DBD30'
 )
 GO
-/****** Object:  ColumnEncryptionKey [CEK_HRM_Auto]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  ColumnEncryptionKey [CEK_HRM_Auto]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE COLUMN ENCRYPTION KEY [CEK_HRM_Auto]
 WITH VALUES
 (
@@ -186,7 +186,7 @@ WITH VALUES
 	ENCRYPTED_VALUE = 0x01700000016C006F00630061006C006D0061006300680069006E0065002F006D0079002F003100350034003300660030003100390032003000300061006100330064006600310037003600330062003800300039003400300033003400360033003500370061006100390064006200640033003000D21F1EE04F70276C791A0F2C8F12DCC7ABF519418CE852F5EE63C11A1E1337CD211EBC70893A2FACE0990D920FFC4D71BDA09EE1824B3D2348C8BCD5907210E643932640FFF9E0D43EBADCA134FC462BD613F9E8B220272BFCE0FE63E5CF443F4774DD95ADA0B2D957BBCB08E095CE7DBF8D8F44A3CE5FF7626170F82E7D7A9B8B9545F25FA0AAE48130DB664013903317BC5004B31C022D02A3DD133AABA8906FE9B73839C5872749D46B6A94470845F3264CAEA052113725B5591E6DBBD45652ACDC6C63558F1167D104DECFA434CE725194248C1588728A181A414A231B2402961BA9121E576DFAB945C44C6DCA662B6F117C645439F8CE1C642AD5BF737A24E94DCDE12C5B601901AEEF99DA6DB483C15AEFC290B0AE2B24DD73180712CAA9AC1E3D1C52C1829BC7BD5FBA99B07F5D69BC03B90C6314CFB782BA81ABA48FC76EA18D069F89DA1FBF365CFD4F7D6CC8FAA87E6DED87761640431D3BBEA726462577AA431F60EF1A61677C342B1761481411382F8A357C14DC26C1859713A01EB293CB1C95CF46B7EF462057706C2EE282E7F696241E7ABDDFEFF7C9F2A1C04431B295A38889A752A7F8961B628551F33F75291D954BAB18C7B5089B3DBB7A628127E365F268E21B0EBA5E897126B0DB3BE5CD5B73C2A4B460B86C8370CA330BFB4D859709F911DD5C8B0CE124C89B68964F334582ACF6A19183563AC23616
 )
 GO
-/****** Object:  Table [HR].[NhanVien_Internal]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[NhanVien_Internal]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -214,7 +214,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  UserDefinedFunction [Security].[fn_rls_BangLuong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  UserDefinedFunction [Security].[fn_rls_BangLuong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER OFF
@@ -247,7 +247,7 @@ RETURN (
 );
 
 GO
-/****** Object:  View [HR].[NhanVien]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  View [HR].[NhanVien]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -276,7 +276,7 @@ SELECT
     [NgaySinh], [GioiTinh], [QueQuan], [MaDonVi], [NgayVaoBienChe], [TrangThai], [UserID]
 FROM [HR].[NhanVien_Internal];
 GO
-/****** Object:  UserDefinedFunction [Security].[fn_RLS_NhanVien]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  UserDefinedFunction [Security].[fn_RLS_NhanVien]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -308,7 +308,7 @@ RETURN (
         OR @MaNV = CAST(SESSION_CONTEXT(N'MaNV') AS VARCHAR(20))
 );
 GO
-/****** Object:  UserDefinedFunction [Security].[fn_SecurityPredicate]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  UserDefinedFunction [Security].[fn_SecurityPredicate]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -349,7 +349,7 @@ RETURN
         )
 );
 GO
-/****** Object:  Table [HR].[BangCap]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[BangCap]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -367,7 +367,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [HR].[ChucVu]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[ChucVu]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -382,7 +382,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [HR].[DonVi]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[DonVi]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -399,7 +399,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [HR].[KhenThuongKyLuat]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[KhenThuongKyLuat]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -418,7 +418,25 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [HR].[QuaTrinhCongTac]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [HR].[PhuCapCoDinh]    Script Date: 05/05/2026 07:51:09 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [HR].[PhuCapCoDinh](
+	[ID_PhuCap] [int] IDENTITY(1,1) NOT NULL,
+	[MaNV] [varchar](20) NOT NULL,
+	[TenPhuCap] [nvarchar](100) NULL,
+	[SoTien] [decimal](18, 2) NULL,
+	[IsActive] [bit] NULL,
+	[NgayTao] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ID_PhuCap] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [HR].[QuaTrinhCongTac]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -437,7 +455,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[BangLuong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[BangLuong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -465,7 +483,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[BaoHiem]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[BaoHiem]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -490,7 +508,7 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[ChiTietNgachLuong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[ChiTietNgachLuong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -506,7 +524,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[DienBienLuong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[DienBienLuong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -527,7 +545,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[HopDong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[HopDong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -547,7 +565,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[LichSuDongBaoHiem]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[LichSuDongBaoHiem]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -566,7 +584,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Salary].[NgachLuong]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [Salary].[NgachLuong]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -581,7 +599,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[AccessAudit]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[AccessAudit]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -602,7 +620,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[Audit]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[Audit]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -622,7 +640,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [System].[AuthorizationAudit]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[AuthorizationAudit]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -641,7 +659,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[Config]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[Config]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -657,7 +675,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[ConfigAuditLog]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[ConfigAuditLog]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -675,7 +693,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[DMLAuditLog]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[DMLAuditLog]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -694,7 +712,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [System].[LoginLogs]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[LoginLogs]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -711,7 +729,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [System].[User]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Table [System].[User]    Script Date: 05/05/2026 07:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -732,50 +750,50 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  SecurityPolicy [Security].[BangLuongPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[BangLuongPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[BangLuongPolicy] 
 ADD FILTER PREDICATE [Security].[fn_rls_BangLuong]([MaNV],[NgayChot]) ON [Salary].[BangLuong],
 ADD BLOCK PREDICATE [Security].[fn_rls_BangLuong]([MaNV],[NgayChot]) ON [Salary].[BangLuong] AFTER UPDATE
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[BaoHiemPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[BaoHiemPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[BaoHiemPolicy] 
 ADD FILTER PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[BaoHiem],
 ADD BLOCK PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[BaoHiem]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[DienBienLuongPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[DienBienLuongPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[DienBienLuongPolicy] 
 ADD FILTER PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[DienBienLuong],
 ADD BLOCK PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[DienBienLuong]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[HopDongPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[HopDongPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[HopDongPolicy] 
 ADD FILTER PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[HopDong],
 ADD BLOCK PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[HopDong]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[KTKLPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[KTKLPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[KTKLPolicy] 
 ADD FILTER PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [HR].[KhenThuongKyLuat],
 ADD BLOCK PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [HR].[KhenThuongKyLuat]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[LichSuBaoHiemPolicy]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[LichSuBaoHiemPolicy]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[LichSuBaoHiemPolicy] 
 ADD FILTER PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[LichSuDongBaoHiem],
 ADD BLOCK PREDICATE [Security].[fn_SecurityPredicate]([MaNV],'') ON [Salary].[LichSuDongBaoHiem]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
-/****** Object:  SecurityPolicy [Security].[Policy_HR_NhanVien]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  SecurityPolicy [Security].[Policy_HR_NhanVien]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE SECURITY POLICY [Security].[Policy_HR_NhanVien] 
 ADD FILTER PREDICATE [Security].[fn_RLS_NhanVien]([MaDonVi],[MaNV]) ON [HR].[NhanVien_Internal]
 WITH (STATE = ON, SCHEMABINDING = ON)
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_NhanVien_DonVi]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_NhanVien_DonVi]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_NhanVien_DonVi] ON [HR].[NhanVien_Internal]
 (
 	[MaDonVi] ASC
@@ -783,7 +801,7 @@ CREATE NONCLUSTERED INDEX [IX_NhanVien_DonVi] ON [HR].[NhanVien_Internal]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UX_NhanVien_Email]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [UX_NhanVien_Email]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE UNIQUE NONCLUSTERED INDEX [UX_NhanVien_Email] ON [HR].[NhanVien_Internal]
 (
 	[Email] ASC
@@ -791,7 +809,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_NhanVien_Email] ON [HR].[NhanVien_Internal]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UX_NhanVien_MaNV]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [UX_NhanVien_MaNV]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE UNIQUE NONCLUSTERED INDEX [UX_NhanVien_MaNV] ON [HR].[NhanVien_Internal]
 (
 	[MaNV] ASC
@@ -799,7 +817,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_NhanVien_MaNV] ON [HR].[NhanVien_Internal]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_BangLuong_ThangNam]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_BangLuong_ThangNam]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_BangLuong_ThangNam] ON [Salary].[BangLuong]
 (
 	[ThangNam] ASC
@@ -807,7 +825,7 @@ CREATE NONCLUSTERED INDEX [IX_BangLuong_ThangNam] ON [Salary].[BangLuong]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_Luong_MaNV]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_Luong_MaNV]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Luong_MaNV] ON [Salary].[DienBienLuong]
 (
 	[MaNV] ASC
@@ -815,7 +833,7 @@ CREATE NONCLUSTERED INDEX [IX_Luong_MaNV] ON [Salary].[DienBienLuong]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UX_CurrentSalary]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [UX_CurrentSalary]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE UNIQUE NONCLUSTERED INDEX [UX_CurrentSalary] ON [Salary].[DienBienLuong]
 (
 	[MaNV] ASC
@@ -823,7 +841,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [UX_CurrentSalary] ON [Salary].[DienBienLuong]
 WHERE ([IsCurrent]=(1))
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_AccessAudit_Date]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_AccessAudit_Date]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_AccessAudit_Date] ON [System].[AccessAudit]
 (
 	[ActionDate] DESC
@@ -831,25 +849,43 @@ CREATE NONCLUSTERED INDEX [IX_AccessAudit_Date] ON [System].[AccessAudit]
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_Audit_TargetDate]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_Audit_TargetDate]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Audit_TargetDate] ON [System].[AuthorizationAudit]
 (
 	[Target_MaNV] ASC,
 	[ActionDate] DESC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_AuthAudit_Date]    Script Date: 05/05/2026 07:51:09 AM ******/
+CREATE NONCLUSTERED INDEX [IX_AuthAudit_Date] ON [System].[AuthorizationAudit]
+(
+	[ActionDate] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_ConfigAudit_Date]    Script Date: 05/05/2026 07:51:09 AM ******/
+CREATE NONCLUSTERED INDEX [IX_ConfigAudit_Date] ON [System].[ConfigAuditLog]
+(
+	[UpdatedAt] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_DMLAudit_Table]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [IX_DMLAudit_Table]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE NONCLUSTERED INDEX [IX_DMLAudit_Table] ON [System].[DMLAuditLog]
 (
 	[TableName] ASC,
 	[UpdatedAt] DESC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
+/****** Object:  Index [IX_LoginLogs_Date]    Script Date: 05/05/2026 07:51:09 AM ******/
+CREATE NONCLUSTERED INDEX [IX_LoginLogs_Date] ON [System].[LoginLogs]
+(
+	[LoginTime] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [UX_User_Username]    Script Date: 04/05/2026 02:50:02 PM ******/
+/****** Object:  Index [UX_User_Username]    Script Date: 05/05/2026 07:51:09 AM ******/
 CREATE UNIQUE NONCLUSTERED INDEX [UX_User_Username] ON [System].[User]
 (
 	[Username] ASC
@@ -858,6 +894,12 @@ GO
 ALTER TABLE [HR].[ChucVu] ADD  DEFAULT ((0)) FOR [PhuCapChucVu]
 GO
 ALTER TABLE [HR].[NhanVien_Internal] ADD  DEFAULT ((1)) FOR [TrangThai]
+GO
+ALTER TABLE [HR].[PhuCapCoDinh] ADD  DEFAULT ((0)) FOR [SoTien]
+GO
+ALTER TABLE [HR].[PhuCapCoDinh] ADD  DEFAULT ((1)) FOR [IsActive]
+GO
+ALTER TABLE [HR].[PhuCapCoDinh] ADD  DEFAULT (getdate()) FOR [NgayTao]
 GO
 ALTER TABLE [Salary].[BangLuong] ADD  DEFAULT ((0)) FOR [PhuCap]
 GO

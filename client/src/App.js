@@ -16,6 +16,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoginLogs from './pages/LoginLogs';
 import SystemConfig from './pages/SystemConfig';
+import AttendancePage from './pages/AttendancePage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 function App() {
@@ -38,6 +39,9 @@ function App() {
 
           {/* Trang hồ sơ cá nhân: Mọi role */}
           <Route path="profile" element={<Profile />} />
+
+          {/* Chấm công: Mọi role */}
+          <Route path="attendance" element={<AttendancePage />} />
 
           {/* Quản lý nhân sự: Chỉ Admin, HR và Trưởng phòng */}
           <Route path="employees" element={

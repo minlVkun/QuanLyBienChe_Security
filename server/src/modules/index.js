@@ -20,6 +20,8 @@ function registerRoutes(app) {
   
   app.use('/api/login-logs', require('./loginLog/loginLog.route'));
   app.use('/api/configs', require('./systemConfig/config.route'));
+  app.use('/api/attendance', require('./attendance/attendance.route'));
+  app.use('/api/shifts', require('./shift/shift.route'));
 }
 
 module.exports = { registerRoutes };

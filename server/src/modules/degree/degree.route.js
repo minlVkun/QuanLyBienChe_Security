@@ -75,10 +75,9 @@ const { authorize } = require('../../middlewares/authMiddleware');
 // Nhân viên, HR, Admin đều có thể xem (RLS sẽ tự lọc nếu nhân viên xem người khác)
 router.get('/:id', authorize(), degreeController.getDegrees);
 
-// Chỉ Admin và HR mới được thêm/xóa bằng cấp vào hồ sơ
+// Chỉ Admin và HR mới được thêm/sửa/xóa bằng cấp vào hồ sơ
 router.post('/', authorize(['db_Admin', 'db_HR_Human']), degreeController.addDegree);
-
-// Chỉ Admin và HR mới được xóa bằng cấp khỏi hồ sơ
+router.put('/:id', authorize(['db_Admin', 'db_HR_Human']), degreeController.updateDegree);
 router.delete('/:id', authorize(['db_Admin', 'db_HR_Human']), degreeController.deleteDegree);
 
 module.exports = router;

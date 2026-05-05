@@ -34,6 +34,27 @@ class DegreeModel {
         return result.rowsAffected[0];
     }
 
+    // Cập nhật thông tin bằng cấp
+    static async update(reqUser, idBang, data) {
+        const query = `
+            UPDATE [HR].[BangCap]
+            SET LoaiBang = @LoaiBang,
+                ChuyenNganh = @ChuyenNganh,
+                NoiDaoTao = @NoiDaoTao,
+                NamTotNghiep = @NamTotNghiep
+            WHERE ID_Bang = @ID_Bang
+        `;
+        const inputs = [
+            { name: 'ID_Bang', type: sql.Int, value: idBang },
+            { name: 'LoaiBang', type: sql.NVarChar, value: data.LoaiBang },
+            { name: 'ChuyenNganh', type: sql.NVarChar, value: data.ChuyenNganh },
+            { name: 'NoiDaoTao', type: sql.NVarChar, value: data.NoiDaoTao },
+            { name: 'NamTotNghiep', type: sql.Int, value: data.NamTotNghiep }
+        ];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
+        return result.rowsAffected[0];
+    }
+
     // Xóa bằng cấp (Xóa vật lý vì đây là dữ liệu bổ trợ, có Audit Log bảo vệ)
     static async delete(reqUser, idBang) {
         const query = 'DELETE FROM [HR].[BangCap] WHERE ID_Bang = @ID_Bang';

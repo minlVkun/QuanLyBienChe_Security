@@ -35,7 +35,8 @@ class EmployeeModel {
                 nv.UserID,
                 u.RoleName AS Role,
                 curr.TenChucVu AS ChucVuHienTai, 
-                curr.TuNgay AS NgayVaoBienChe
+                curr.TuNgay AS NgayVaoBienChe,
+                nv.MaCaLamViec
             FROM HR.NhanVien nv
             LEFT JOIN HR.DonVi dv ON nv.MaDonVi = dv.MaDonVi
             LEFT JOIN System.[User] u ON nv.UserID = u.UserID
@@ -77,7 +78,8 @@ class EmployeeModel {
                 u.RoleName AS Role,
                 curr.MaChucVu,
                 curr.TenChucVu AS ChucVuHienTai, 
-                curr.TuNgay AS NgayVaoBienChe
+                curr.TuNgay AS NgayVaoBienChe,
+                nv.MaCaLamViec
             FROM HR.NhanVien nv
             LEFT JOIN HR.DonVi dv ON nv.MaDonVi = dv.MaDonVi
             LEFT JOIN System.[User] u ON nv.UserID = u.UserID
@@ -133,9 +135,9 @@ class EmployeeModel {
 
                 -- 2. Tạo hồ sơ nhân viên
                 INSERT INTO [HR].[NhanVien] 
-                (MaNV, HoTen, NgaySinh, GioiTinh, SoCCCD, Email, SoDienThoai, QueQuan, MaDonVi, TrangThai, UserID)
+                (MaNV, HoTen, NgaySinh, GioiTinh, SoCCCD, Email, SoDienThoai, QueQuan, MaDonVi, TrangThai, UserID, MaCaLamViec)
                 VALUES 
-                (@MaNV, @HoTen, @NgaySinh, @GioiTinh, @SoCCCD, @Email, @SoDienThoai, @QueQuan, @MaDonVi, 1, @NewUserID);
+                (@MaNV, @HoTen, @NgaySinh, @GioiTinh, @SoCCCD, @Email, @SoDienThoai, @QueQuan, @MaDonVi, 1, @NewUserID, @MaCaLamViec);
 
                 -- 3. Khởi tạo quá trình công tác
                 INSERT INTO [HR].[QuaTrinhCongTac] (MaNV, TuNgay, MaDonVi, MaChucVu, NoiDung)
@@ -166,7 +168,8 @@ class EmployeeModel {
                 { name: 'QueQuan', type: sql.NVarChar, value: employeeData.QueQuan },
                 { name: 'MaDonVi', type: sql.VarChar, value: employeeData.MaDonVi },
                 { name: 'NgayVaoBienChe', type: sql.Date, value: employeeData.NgayVaoBienChe },
-                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu }
+                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu },
+                { name: 'MaCaLamViec', type: sql.VarChar, value: employeeData.MaCaLamViec || null }
             ];
 
             const result = await DBHelper.queryWithContext(reqUser, query, inputs);
@@ -218,7 +221,8 @@ class EmployeeModel {
                 { name: 'QueQuan', type: sql.NVarChar, value: employeeData.QueQuan },
                 { name: 'MaDonVi', type: sql.VarChar, value: employeeData.MaDonVi },
                 { name: 'NgayVaoBienChe', type: sql.Date, value: employeeData.NgayVaoBienChe },
-                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu }
+                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu },
+                { name: 'MaCaLamViec', type: sql.VarChar, value: employeeData.MaCaLamViec || null }
             ];
 
             const result = await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
@@ -242,7 +246,8 @@ class EmployeeModel {
                 { key: 'Email', type: sql.VarChar },
                 { key: 'SoDienThoai', type: sql.VarChar },
                 { key: 'QueQuan', type: sql.NVarChar },
-                { key: 'MaDonVi', type: sql.VarChar }
+                { key: 'MaDonVi', type: sql.VarChar },
+                { key: 'MaCaLamViec', type: sql.VarChar }
             ];
 
             allowedFields.forEach(field => {

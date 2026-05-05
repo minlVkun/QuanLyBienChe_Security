@@ -32,8 +32,20 @@ const deleteDegree = async (req, res) => {
     }
 };
 
+const updateDegree = async (req, res) => {
+    try {
+        const idBang = req.params.id;
+        const result = await DegreeService.update(req.user, idBang, req.body);
+        res.status(200).json({ success: true, message: result.message });
+    } catch (err) {
+        const statusCode = err.statusCode || 500;
+        res.status(statusCode).json({ success: false, message: err.message || "Lỗi máy chủ khi cập nhật bằng cấp." });
+    }
+};
+
 module.exports = {  
     getDegrees, 
     addDegree, 
+    updateDegree,
     deleteDegree 
 };
