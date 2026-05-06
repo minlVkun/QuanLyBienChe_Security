@@ -39,6 +39,8 @@ export const MENU_PERMISSIONS = {
   '/configs': [ROLES.ADMIN],
   '/positions': [ROLES.ADMIN, ROLES.HR_HUMAN],
   '/salary-scales': [ROLES.ADMIN, ROLES.HR_HUMAN],
+  '/shifts': [ROLES.ADMIN, ROLES.HR_HUMAN],
+  '/schedule': [ROLES.ADMIN, ROLES.HR_HUMAN, ROLES.HR_PAYROLL, ROLES.DEPT_HEAD],
   '/attendance': null, // Tất cả (Check-in/out)
 };
 

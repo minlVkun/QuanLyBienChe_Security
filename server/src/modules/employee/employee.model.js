@@ -1,5 +1,5 @@
 //src/models/employeeModel.js
-const {sql} = require('../../config/db');
+const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class EmployeeModel {
@@ -36,10 +36,12 @@ class EmployeeModel {
                 u.RoleName AS Role,
                 curr.TenChucVu AS ChucVuHienTai, 
                 curr.TuNgay AS NgayVaoBienChe,
-                nv.MaCaLamViec
+                nv.MaCaLamViec,
+                c.TenCa AS TenCaLamViec
             FROM HR.NhanVien nv
             LEFT JOIN HR.DonVi dv ON nv.MaDonVi = dv.MaDonVi
             LEFT JOIN System.[User] u ON nv.UserID = u.UserID
+            LEFT JOIN HR.CaLamViec c ON nv.MaCaLamViec = c.MaCaLamViec
             OUTER APPLY (
                 SELECT TOP 1 
                     cv.TenChucVu,
@@ -98,7 +100,7 @@ class EmployeeModel {
         `;
 
         try {
-            const inputs = [{ name: 'MaNV', type: sql.VarChar, value: maNV }];
+            const inputs = [{ name: 'MaNV', type: sql.VarChar(20), value: maNV }];
             const result = await DBHelper.queryWithContext(reqUser, query, inputs);
             return result.recordset[0] || null;
         } catch (err) {
@@ -113,7 +115,7 @@ class EmployeeModel {
             WHERE MaDonVi = @MaDonVi AND MaTruongPhong IS NOT NULL AND MaTruongPhong <> ''
         `;
         try {
-            const inputs = [{ name: 'MaDonVi', type: sql.VarChar, value: maDonVi }];
+            const inputs = [{ name: 'MaDonVi', type: sql.VarChar(20), value: maDonVi }];
             const result = await DBHelper.queryWithContext(reqUser, query, inputs);
             return result.recordset.length > 0;
         } catch (error) {
@@ -157,19 +159,19 @@ class EmployeeModel {
             `;
 
             const inputs = [
-                { name: 'MaNV', type: sql.VarChar, value: employeeData.MaNV },
-                { name: 'PasswordHash', type: sql.VarBinary, value: employeeData.PasswordHash }, 
-                { name: 'HoTen', type: sql.NVarChar, value: employeeData.HoTen },
+                { name: 'MaNV', type: sql.VarChar(20), value: employeeData.MaNV },
+                { name: 'PasswordHash', type: sql.VarBinary(sql.MAX), value: employeeData.PasswordHash },
+                { name: 'HoTen', type: sql.NVarChar(100), value: employeeData.HoTen },
                 { name: 'NgaySinh', type: sql.Date, value: employeeData.NgaySinh },
                 { name: 'GioiTinh', type: sql.Bit, value: employeeData.GioiTinh },
-                { name: 'SoCCCD', type: sql.VarChar, value: employeeData.SoCCCD },
-                { name: 'Email', type: sql.VarChar, value: employeeData.Email },
-                { name: 'SoDienThoai', type: sql.VarChar, value: employeeData.SoDienThoai },
-                { name: 'QueQuan', type: sql.NVarChar, value: employeeData.QueQuan },
-                { name: 'MaDonVi', type: sql.VarChar, value: employeeData.MaDonVi },
+                { name: 'SoCCCD', type: sql.VarChar(20), value: employeeData.SoCCCD },
+                { name: 'Email', type: sql.VarChar(100), value: employeeData.Email },
+                { name: 'SoDienThoai', type: sql.VarChar(15), value: employeeData.SoDienThoai },
+                { name: 'QueQuan', type: sql.NVarChar(255), value: employeeData.QueQuan },
+                { name: 'MaDonVi', type: sql.VarChar(20), value: employeeData.MaDonVi },
                 { name: 'NgayVaoBienChe', type: sql.Date, value: employeeData.NgayVaoBienChe },
-                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu },
-                { name: 'MaCaLamViec', type: sql.VarChar, value: employeeData.MaCaLamViec || null }
+                { name: 'MaChucVu', type: sql.VarChar(20), value: employeeData.MaChucVu },
+                { name: 'MaCaLamViec', type: sql.VarChar(10), value: employeeData.MaCaLamViec || null }
             ];
 
             const result = await DBHelper.queryWithContext(reqUser, query, inputs);
@@ -190,9 +192,9 @@ class EmployeeModel {
 
                 -- 2. Tạo hồ sơ nhân viên
                 INSERT INTO [HR].[NhanVien] 
-                (MaNV, HoTen, NgaySinh, GioiTinh, SoCCCD, Email, SoDienThoai, QueQuan, MaDonVi, TrangThai, UserID)
+                (MaNV, HoTen, NgaySinh, GioiTinh, SoCCCD, Email, SoDienThoai, QueQuan, MaDonVi, TrangThai, UserID, MaCaLamViec)
                 VALUES 
-                (@MaNV, @HoTen, @NgaySinh, @GioiTinh, @SoCCCD, @Email, @SoDienThoai, @QueQuan, @MaDonVi, 1, @NewUserID);
+                (@MaNV, @HoTen, @NgaySinh, @GioiTinh, @SoCCCD, @Email, @SoDienThoai, @QueQuan, @MaDonVi, 1, @NewUserID, @MaCaLamViec);
 
                 -- 3. Khởi tạo quá trình công tác
                 INSERT INTO [HR].[QuaTrinhCongTac] (MaNV, TuNgay, MaDonVi, MaChucVu, NoiDung)
@@ -210,19 +212,19 @@ class EmployeeModel {
             `;
 
             const inputs = [
-                { name: 'MaNV', type: sql.VarChar, value: employeeData.MaNV },
-                { name: 'PasswordHash', type: sql.VarBinary, value: employeeData.PasswordHash }, 
-                { name: 'HoTen', type: sql.NVarChar, value: employeeData.HoTen },
+                { name: 'MaNV', type: sql.VarChar(20), value: employeeData.MaNV },
+                { name: 'PasswordHash', type: sql.VarBinary(sql.MAX), value: employeeData.PasswordHash },
+                { name: 'HoTen', type: sql.NVarChar(100), value: employeeData.HoTen },
                 { name: 'NgaySinh', type: sql.Date, value: employeeData.NgaySinh },
                 { name: 'GioiTinh', type: sql.Bit, value: employeeData.GioiTinh },
-                { name: 'SoCCCD', type: sql.VarChar, value: employeeData.SoCCCD },
-                { name: 'Email', type: sql.VarChar, value: employeeData.Email },
-                { name: 'SoDienThoai', type: sql.VarChar, value: employeeData.SoDienThoai },
-                { name: 'QueQuan', type: sql.NVarChar, value: employeeData.QueQuan },
-                { name: 'MaDonVi', type: sql.VarChar, value: employeeData.MaDonVi },
+                { name: 'SoCCCD', type: sql.VarChar(20), value: employeeData.SoCCCD },
+                { name: 'Email', type: sql.VarChar(100), value: employeeData.Email },
+                { name: 'SoDienThoai', type: sql.VarChar(15), value: employeeData.SoDienThoai },
+                { name: 'QueQuan', type: sql.NVarChar(255), value: employeeData.QueQuan },
+                { name: 'MaDonVi', type: sql.VarChar(20), value: employeeData.MaDonVi },
                 { name: 'NgayVaoBienChe', type: sql.Date, value: employeeData.NgayVaoBienChe },
-                { name: 'MaChucVu', type: sql.VarChar, value: employeeData.MaChucVu },
-                { name: 'MaCaLamViec', type: sql.VarChar, value: employeeData.MaCaLamViec || null }
+                { name: 'MaChucVu', type: sql.VarChar(20), value: employeeData.MaChucVu },
+                { name: 'MaCaLamViec', type: sql.VarChar(10), value: employeeData.MaCaLamViec || null }
             ];
 
             const result = await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
@@ -232,22 +234,22 @@ class EmployeeModel {
         }
     }
 
-    
+
     static async UpdateEmployee(reqUser, maNV, updateData) {
         try {
             const fieldsToUpdate = [];
-            const inputs = [{ name: 'MaNV', type: sql.VarChar, value: maNV }];
+            const inputs = [{ name: 'MaNV', type: sql.VarChar(20), value: maNV }];
 
             // Cấu hình các cột cho phép cập nhật trực tiếp tại HR.NhanVien
             const allowedFields = [
-                { key: 'HoTen', type: sql.NVarChar },
+                { key: 'HoTen', type: sql.NVarChar(100) },
                 { key: 'NgaySinh', type: sql.Date },
                 { key: 'GioiTinh', type: sql.Bit },
-                { key: 'Email', type: sql.VarChar },
-                { key: 'SoDienThoai', type: sql.VarChar },
-                { key: 'QueQuan', type: sql.NVarChar },
-                { key: 'MaDonVi', type: sql.VarChar },
-                { key: 'MaCaLamViec', type: sql.VarChar }
+                { key: 'Email', type: sql.VarChar(100) },
+                { key: 'SoDienThoai', type: sql.VarChar(15) },
+                { key: 'QueQuan', type: sql.NVarChar(255) },
+                { key: 'MaDonVi', type: sql.VarChar(20) },
+                { key: 'MaCaLamViec', type: sql.VarChar(10) }
             ];
 
             allowedFields.forEach(field => {
@@ -260,7 +262,7 @@ class EmployeeModel {
             // Query xây dựng động
             let sqlQuery = `SET XACT_ABORT ON; BEGIN TRAN; \n`;
             sqlQuery += `DECLARE @Rows1 INT = 0, @Rows2 INT = 0;\n`;
-            
+
             if (fieldsToUpdate.length > 0) {
                 sqlQuery += `
                     UPDATE [HR].[NhanVien]
@@ -274,10 +276,10 @@ class EmployeeModel {
             if (updateData.MaChucVu || updateData.NgayVaoBienChe) {
                 // Đảm bảo các biến này có trong inputs nếu chưa có
                 if (!inputs.find(i => i.name === 'MaChucVu'))
-                    inputs.push({ name: 'MaChucVu', type: sql.VarChar, value: updateData.MaChucVu || null });
+                    inputs.push({ name: 'MaChucVu', type: sql.VarChar(20), value: updateData.MaChucVu || null });
                 if (!inputs.find(i => i.name === 'NgayVaoBienChe'))
                     inputs.push({ name: 'NgayVaoBienChe', type: sql.Date, value: updateData.NgayVaoBienChe || null });
-                
+
                 sqlQuery += `
                     UPDATE [HR].[QuaTrinhCongTac]
                     SET MaChucVu = ISNULL(@MaChucVu, MaChucVu),
@@ -289,13 +291,16 @@ class EmployeeModel {
 
             sqlQuery += `\n SELECT (@Rows1 + @Rows2) AS AffectedRows; COMMIT TRAN;`;
 
-            // DEBUG LOG cho Production
-            console.log("--- DEBUG SQL UPDATE ---");
-            console.log("Target MaNV:", maNV);
-            console.log("Inputs:", inputs.map(i => `${i.name}: ${i.value}`));
+            // --- DEBUG LOG CHO PHÁT TRIỂN ---
+            console.log("==========================================");
+            console.log("🚀 [Model - UpdateEmployee] Đang thực thi Query:");
+            console.log(sqlQuery);
+            console.log("📦 Tham số đầu vào:");
+            inputs.forEach(i => console.log(`   - @${i.name} (${i.type}): ${i.value}`));
+            console.log("==========================================");
 
             const result = await DBHelper.queryWithContext(reqUser, sqlQuery, inputs);
-            
+
             const affected = result.recordset[0]?.AffectedRows || 0;
             return affected;
         } catch (err) {
@@ -327,9 +332,9 @@ class EmployeeModel {
             `;
 
             const inputs = [
-                { name: 'MaNVCanXoa', type: sql.VarChar, value: maNVCanXoa }
+                { name: 'MaNVCanXoa', type: sql.VarChar(20), value: maNVCanXoa }
             ];
-            
+
             const result = await DBHelper.queryWithContext(reqUser, query, inputs);
             // Lấy AffectedRows từ recordset
             return result.recordset[0].AffectedRows;
@@ -351,12 +356,12 @@ class EmployeeModel {
             WHERE MaNV = @MaNV;
         `;
         const inputs = [
-            { name: 'MaNV', type: sql.VarChar, value: maNV },
-            { name: 'MaDonVi', type: sql.VarChar, value: maDonVi }
+            { name: 'MaNV', type: sql.VarChar(20), value: maNV },
+            { name: 'MaDonVi', type: sql.VarChar(20), value: maDonVi }
         ];
         return await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
     }
 }
 
 module.exports = EmployeeModel;
-            
+

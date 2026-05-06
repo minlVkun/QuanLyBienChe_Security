@@ -2,26 +2,36 @@ const { sql } = require('../../config/db');
 const DBHelper = require('../../utils/dbHelper');
 
 class ShiftModel {
-    static async getAll(reqUser) {
-        const query = `SELECT * FROM [HR].[CaLamViec] ORDER BY MaCa`;
-        const result = await DBHelper.queryWithContext(reqUser, query);
+    static async getAll(reqUser, { page = 1, limit = 50 } = {}) {
+        const offset = (page - 1) * limit;
+        const query = `
+            SELECT *, COUNT(*) OVER() as TotalRows 
+            FROM [HR].[CaLamViec] 
+            ORDER BY MaCaLamViec
+            OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
+        `;
+        const inputs = [
+            { name: 'Offset', type: sql.Int, value: offset },
+            { name: 'Limit', type: sql.Int, value: limit }
+        ];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
     }
 
     static async getById(reqUser, maCa) {
-        const query = `SELECT * FROM [HR].[CaLamViec] WHERE MaCa = @MaCa`;
-        const inputs = [{ name: 'MaCa', type: sql.VarChar(20), value: maCa }];
+        const query = `SELECT * FROM [HR].[CaLamViec] WHERE MaCaLamViec = @MaCa`;
+        const inputs = [{ name: 'MaCa', type: sql.VarChar(10), value: maCa }];
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset[0];
     }
 
     static async create(reqUser, data) {
         const query = `
-            INSERT INTO [HR].[CaLamViec] (MaCa, TenCa, GioBatDau, GioKetThuc, PhutChoPhepTre)
+            INSERT INTO [HR].[CaLamViec] (MaCaLamViec, TenCa, GioBatDau, GioKetThuc, PhutChoPhepTre)
             VALUES (@MaCa, @TenCa, @GioBatDau, @GioKetThuc, @PhutChoPhepTre)
         `;
         const inputs = [
-            { name: 'MaCa', type: sql.VarChar(20), value: data.maCa },
+            { name: 'MaCa', type: sql.VarChar(10), value: data.maCa },
             { name: 'TenCa', type: sql.NVarChar(100), value: data.tenCa },
             { name: 'GioBatDau', type: sql.Time, value: data.gioBatDau },
             { name: 'GioKetThuc', type: sql.Time, value: data.gioKetThuc },
@@ -37,10 +47,10 @@ class ShiftModel {
                 GioBatDau = @GioBatDau,
                 GioKetThuc = @GioKetThuc,
                 PhutChoPhepTre = @PhutChoPhepTre
-            WHERE MaCa = @MaCa
+            WHERE MaCaLamViec = @MaCa
         `;
         const inputs = [
-            { name: 'MaCa', type: sql.VarChar(20), value: maCa },
+            { name: 'MaCa', type: sql.VarChar(10), value: maCa },
             { name: 'TenCa', type: sql.NVarChar(100), value: data.tenCa },
             { name: 'GioBatDau', type: sql.Time, value: data.gioBatDau },
             { name: 'GioKetThuc', type: sql.Time, value: data.gioKetThuc },
@@ -50,8 +60,8 @@ class ShiftModel {
     }
 
     static async delete(reqUser, maCa) {
-        const query = `DELETE FROM [HR].[CaLamViec] WHERE MaCa = @MaCa`;
-        const inputs = [{ name: 'MaCa', type: sql.VarChar(20), value: maCa }];
+        const query = `DELETE FROM [HR].[CaLamViec] WHERE MaCaLamViec = @MaCa`;
+        const inputs = [{ name: 'MaCa', type: sql.VarChar(10), value: maCa }];
         return await DBHelper.queryWithContext(reqUser, query, inputs);
     }
 }

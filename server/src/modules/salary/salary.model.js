@@ -56,51 +56,62 @@ class SalaryModel {
         return result.recordset;
     }
 
-    // 3. Nghiệp vụ tính lương hàng loạt (Tốc độ cao)
-    static async generatePayroll(reqUser, thangNam, luongCoSo, phuCap, tyLeKhauTru) {
+    /**
+     * Nghiệp vụ tính lương hàng loạt (Tích hợp Chấm công thực tế)
+     * Quy tắc: Lương = (Hệ số * Lương cơ sở / 26) * Ngày công thực tế + Phụ cấp - Khấu trừ bảo hiểm - Phạt đi trễ
+     */
+    static async generatePayroll(reqUser, thangNam, luongCoSo, phuCapChung, tyLeKhauTru, transaction = null) {
         const query = `
-            BEGIN TRY
-                BEGIN TRAN;
-                -- BƯỚC 1: Xóa dữ liệu cũ của tháng đó trước khi chốt lại (Đảm bảo tính Idempotency)
-                DELETE FROM Salary.BangLuong WHERE ThangNam = @ThangNam;
+            -- BƯỚC 1: Xóa dữ liệu cũ (Idempotency)
+            DELETE FROM Salary.BangLuong WHERE ThangNam = @ThangNam;
 
-                -- BƯỚC 2: Thực hiện chèn hàng loạt (Đã tích hợp Phụ cấp cố định)
-                INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, GhiChu)
+            -- BƯỚC 2: Tính toán và Chốt lương
+            INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, GhiChu)
+            SELECT 
+                dbl.MaNV, 
+                @ThangNam, 
+                dbl.HeSoLuong, 
+                @LuongCoSo, 
+                (@PhuCapChung + ISNULL(pc.TongPhuCap, 0)) AS TongPhuCap, 
+                (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru) AS TienBH,
+                -- CÔNG THỨC TÍNH LƯƠNG CHÍNH XÁC:
+                ROUND(
+                    ((dbl.HeSoLuong * @LuongCoSo / 26.0) * ISNULL(att.NgayCong, 0)) -- Lương theo ngày công (Mặc định 26 ngày chuẩn)
+                    + (@PhuCapChung + ISNULL(pc.TongPhuCap, 0))                     -- Cộng phụ cấp
+                    - (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru)                  -- Trừ bảo hiểm
+                    - (ISNULL(att.TongPhutTre, 0) * 1000)                           -- Phạt đi trễ (VD: 1,000đ/phút)
+                , 0) AS ThucLanh,
+                N'Chốt lương tự động (Ngày công: ' + CAST(ISNULL(att.NgayCong, 0) AS NVARCHAR) + N')'
+            FROM Salary.DienBienLuong dbl
+            -- Join lấy Phụ cấp cố định
+            LEFT JOIN (
+                SELECT MaNV, SUM(SoTien) as TongPhuCap
+                FROM HR.PhuCapCoDinh
+                WHERE IsActive = 1
+                GROUP BY MaNV
+            ) pc ON dbl.MaNV = pc.MaNV
+            -- Join lấy Chấm công thực tế
+            LEFT JOIN (
                 SELECT 
-                    dbl.MaNV, 
-                    @ThangNam, 
-                    dbl.HeSoLuong, 
-                    @LuongCoSo, 
-                    (@PhuCap + ISNULL(pc.TongPhuCap, 0)), 
-                    (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru), 
-                    ((dbl.HeSoLuong * @LuongCoSo) + (@PhuCap + ISNULL(pc.TongPhuCap, 0)) - (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru)),
-                    N'Hệ thống tự động chốt (Bao gồm PC cố định)'
-                FROM Salary.DienBienLuong dbl
-                LEFT JOIN (
-                    SELECT MaNV, SUM(SoTien) as TongPhuCap
-                    FROM HR.PhuCapCoDinh
-                    WHERE IsActive = 1
-                    GROUP BY MaNV
-                ) pc ON dbl.MaNV = pc.MaNV
-                WHERE dbl.IsCurrent = 1;
-                
-                SELECT @@ROWCOUNT AS RowsInserted;
-                
-                COMMIT TRAN;
-            END TRY
-            BEGIN CATCH
-                IF @@TRANCOUNT > 0 ROLLBACK TRAN;
-                THROW;
-            END CATCH;
+                    MaNV, 
+                    COUNT(*) as NgayCong, 
+                    SUM(ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) as TongPhutTre
+                FROM HR.ChamCong
+                WHERE FORMAT(NgayChamCong, 'MM/yyyy') = @ThangNam
+                GROUP BY MaNV
+            ) att ON dbl.MaNV = att.MaNV
+            WHERE dbl.IsCurrent = 1;
+            
+            SELECT @@ROWCOUNT AS RowsInserted;
         `;
         const inputs = [
             { name: 'ThangNam', type: sql.VarChar, value: thangNam },
             { name: 'LuongCoSo', type: sql.Decimal(18,2), value: luongCoSo },
-            { name: 'PhuCap', type: sql.Decimal(18,2), value: phuCap },
-            { name: 'TyLeKhauTru', type: sql.Decimal(5,3), value: tyLeKhauTru } // VD: 0.105
+            { name: 'PhuCapChung', type: sql.Decimal(18,2), value: phuCapChung },
+            { name: 'TyLeKhauTru', type: sql.Decimal(5,3), value: tyLeKhauTru }
         ];
         
-        const result = await DBHelper.queryWithContext(reqUser, query, inputs);
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs, { timeout: 120000 }, transaction);
         return result.recordset ? result.recordset[0] : { RowsInserted: 0 };
     }
 

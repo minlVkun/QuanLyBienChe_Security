@@ -12,11 +12,13 @@ import PayrollManagement from './pages/PayrollManagement';
 import Profile from './pages/Profile';
 import PositionList from './pages/PositionList';
 import SalaryScaleList from './pages/SalaryScaleList';
+import ShiftList from './pages/ShiftList';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoginLogs from './pages/LoginLogs';
 import SystemConfig from './pages/SystemConfig';
 import AttendancePage from './pages/AttendancePage';
+import SchedulePage from './pages/SchedulePage';
 
 import ProtectedRoute from './routes/ProtectedRoute';
 function App() {
@@ -95,6 +97,18 @@ function App() {
           <Route path="salary-scales" element={
             <ProtectedRoute allowedRoles={['db_Admin', 'db_HR_Human']}>
               <SalaryScaleList />
+            </ProtectedRoute>
+          } />
+
+          <Route path="shifts" element={
+            <ProtectedRoute allowedRoles={['db_Admin', 'db_HR_Human']}>
+              <ShiftList />
+            </ProtectedRoute>
+          } />
+
+          <Route path="schedule" element={
+            <ProtectedRoute allowedRoles={['db_Admin', 'db_HR_Human', 'db_HR_Payroll', 'db_DeptHead']}>
+              <SchedulePage />
             </ProtectedRoute>
           } />
 

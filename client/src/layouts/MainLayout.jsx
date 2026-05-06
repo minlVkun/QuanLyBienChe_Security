@@ -20,7 +20,9 @@ import {
   Layers,
   Menu as MenuIcon,
   LogIn,
-  Clock
+  Clock,
+  Timer,
+  CalendarDays
 } from 'lucide-react';
 
 
@@ -90,6 +92,16 @@ const MainLayout = () => {
       key: '/salary-scales',
       icon: <Layers size={18} />,
       label: <Link to="/salary-scales">Ngạch/Bậc Lương</Link>,
+    },
+    {
+      key: '/shifts',
+      icon: <Timer size={18} />,
+      label: <Link to="/shifts">Danh mục Ca làm việc</Link>,
+    },
+    {
+      key: '/schedule',
+      icon: <CalendarDays size={18} />,
+      label: <Link to="/schedule">Lịch Làm Việc</Link>,
     },
     {
       key: '/users',

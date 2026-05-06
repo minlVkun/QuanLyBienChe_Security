@@ -16,13 +16,23 @@ const AttendanceButton = ({ onRefresh, className, maNV }) => {
         try {
             const today = dayjs().format('YYYY-MM-DD');
             const res = await attendanceService.getHistory(maNV, today, today);
-            if (res.success && res.data.length > 0) {
-                setTodayStatus(res.data[0]);
+            
+            let list = [];
+            if (Array.isArray(res)) {
+                list = res;
+            } else if (res && Array.isArray(res.data)) {
+                list = res.data;
+            } else if (res && res.success && Array.isArray(res.data)) {
+                list = res.data;
+            }
+
+            if (list.length > 0) {
+                setTodayStatus(list[0]);
             } else {
                 setTodayStatus(null);
             }
         } catch (err) {
-            console.error('Lỗi khi lấy trạng thái chấm công hôm nay');
+            console.error('Lỗi khi lấy trạng thái chấm công hôm nay:', err.message);
         }
     }, [maNV]);
 
@@ -31,18 +41,26 @@ const AttendanceButton = ({ onRefresh, className, maNV }) => {
     }, [fetchTodayStatus]);
 
     const handleCheck = async () => {
-        if (loading || (todayStatus?.GioVao && todayStatus?.GioRa)) return;
+        if (loading) return;
 
         setLoading(true);
         try {
             const res = await attendanceService.check();
-            if (res.success) {
-                message.success(res.message || 'Thao tác thành công');
+            const payload = res;
+            if (payload?.success) {
+                message.success(payload.message || 'Thao tác thành công');
                 await fetchTodayStatus();
                 if (onRefresh) onRefresh();
+            } else {
+                message.error(payload?.message || 'Lỗi khi chấm công');
             }
         } catch (err) {
-            message.error(err.message || 'Lỗi khi chấm công');
+            const errMsg = err.response?.data?.message || err.message || 'Lỗi khi chấm công';
+            if (err.response?.status === 500 && errMsg.toLowerCase().includes('ca l')) {
+                message.error('⚠️ Bạn chưa được gán Ca làm việc. Vui lòng liên hệ HR!');
+            } else {
+                message.error(errMsg);
+            }
         } finally {
             setLoading(false);
         }
@@ -62,21 +80,22 @@ const AttendanceButton = ({ onRefresh, className, maNV }) => {
         icon = <LogOut size={20} />;
         btnClass = "bg-amber-500 text-white hover:bg-amber-600 shadow-amber-200/50";
     } else if (isFinished) {
-        buttonText = "Hoàn tất";
-        icon = <CheckCircle2 size={20} />;
-        btnClass = "bg-emerald-500 text-white opacity-80 cursor-not-allowed shadow-emerald-100/50";
+        // Nếu đã xong 1 phiên, cho phép Check-in phiên mới
+        buttonText = "Check-in"; 
+        icon = <LogIn size={20} />;
+        btnClass = "bg-white text-blue-600 hover:text-blue-700 shadow-blue-200/50";
     }
 
     return (
         <div className="relative group">
-            <Tooltip title={isFinished ? "Bạn đã hoàn tất ngày làm việc" : (hasCheckedIn ? "Nhấn để kết thúc ca làm" : "Nhấn để bắt đầu ca làm")}>
+            <Tooltip title={hasCheckedIn && !hasCheckedOut ? "Nhấn để kết thúc ca làm" : "Nhấn để bắt đầu ca làm"}>
                 <Button
                     type="primary"
                     size="large"
                     icon={icon}
                     onClick={handleCheck}
                     loading={loading}
-                    disabled={loading || isFinished}
+                    disabled={loading}
                     className={`h-14 px-8 border-none font-bold rounded-2xl shadow-xl transition-all duration-300 flex items-center gap-3 hover:scale-105 active:scale-95 ${btnClass} ${className}`}
                 >
                     <span className="text-base tracking-wide">{buttonText}</span>

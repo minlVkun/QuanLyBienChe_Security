@@ -9,6 +9,7 @@ import employeeService from '../../services/Employee/employeeService';
 
 import PositionSelect from '../common/PositionSelect';
 import UnitSelect from '../common/UnitSelect';
+import ShiftSelect from '../common/ShiftSelect';
 
 import CustomButton from '../shared/CustomButton';
 import CustomSelect from '../shared/CustomSelect';
@@ -23,6 +24,7 @@ const initialFormState = {
   QueQuan: '',
   MaDonVi: '',
   MaChucVu: '',
+  MaCaLamViec: '',
   NgayVaoBienChe: ''
 };
 
@@ -43,7 +45,9 @@ const EmployeeFormModal = ({ isOpen, onClose, onRefresh, initialData }) => {
           GioiTinh: (initialData.GioiTinh === 1 || initialData.GioiTinh === true) ? 'Nữ' : 'Nam',
 
           MaDonVi: initialData.MaDonVi || '', 
-          MaChucVu: initialData.MaChucVu || '',          
+          MaChucVu: initialData.MaChucVu || '',
+          MaCaLamViec: initialData.MaCaLamViec || '',
+          
           // Xử lý cắt chuỗi ngày tháng để gắn vào input type="date"
           NgaySinh: initialData.NgaySinh ? initialData.NgaySinh.split('T')[0] : '',
           NgayVaoBienChe: initialData.NgayVaoBienChe ? initialData.NgayVaoBienChe.split('T')[0] : ''
@@ -103,7 +107,8 @@ const EmployeeFormModal = ({ isOpen, onClose, onRefresh, initialData }) => {
           NgaySinh: formData.NgaySinh,
           GioiTinh: formData.GioiTinh === 'Nam' ? 0 : 1,
           SoDienThoai: formData.SoDienThoai,
-          QueQuan: formData.QueQuan
+          QueQuan: formData.QueQuan,
+          MaCaLamViec: formData.MaCaLamViec
         };
 
         // SỬ DỤNG SERVICE ĐỂ UPDATE
@@ -325,11 +330,17 @@ const EmployeeFormModal = ({ isOpen, onClose, onRefresh, initialData }) => {
                 </div>
               </div>
 
-              <div className="w-full">
-                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Số điện thoại</label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="w-full">
                   <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="tel" name="SoDienThoai" value={formData.SoDienThoai} onChange={handleChange} disabled={isSubmitting} className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-blue-500" placeholder="09xxxxxxxx" />
+                </div>
+                <div className="w-full">
+                  <ShiftSelect 
+                    value={formData.MaCaLamViec} 
+                    onChange={handleChange} 
+                    disabled={isSubmitting} 
+                  />
                 </div>
               </div>
             </div>

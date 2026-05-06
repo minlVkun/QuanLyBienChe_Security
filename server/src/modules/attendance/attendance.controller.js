@@ -53,10 +53,22 @@ class AttendanceController {
                 toDate: req.query.toDate,
                 maDonVi: req.query.maDonVi,
                 trangThai: req.query.trangThai,
-                keyword: req.query.keyword
+                keyword: req.query.keyword,
+                page: parseInt(req.query.page) || 1,
+                limit: parseInt(req.query.limit) || 50
             };
             const data = await AttendanceService.getAll(req.user, filters);
-            return res.status(200).json({ success: true, data });
+            
+            const totalRows = data.length > 0 ? data[0].TotalRows : 0;
+            return res.status(200).json({ 
+                success: true, 
+                data: data.map(({ TotalRows, ...item }) => item),
+                pagination: {
+                    totalRows,
+                    page: filters.page,
+                    limit: filters.limit
+                }
+            });
         } catch (err) {
             console.error('[AttendanceController.getAll] ERROR:', err);
             return res.status(err.statusCode || 500).json({ success: false, message: err.message });

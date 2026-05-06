@@ -2,6 +2,7 @@
 const SalaryModel = require('./salary.model');
 const EmployeeModel = require('../employee/employee.model');
 const AuditService = require('../audit/audit.service');
+const { poolPromise, sql } = require('../../config/db');
 const { salarySchema, formatZodError } = require('./salary.validation');
 const { salaryScaleSchema, salaryStepSchema, formatZodError: formatScaleError } = require('./salaryScale.validation');
 
@@ -33,19 +34,28 @@ class SalaryService {
             err.statusCode = 422; throw err;
         }
 
-        const LUONG_CO_SO = 2340000;
-        const PHU_CAP_MAC_DINH = 500000;
-        const TY_LE_KHAU_TRU = 0.105; 
+        const pool = await poolPromise;
+        const transaction = new sql.Transaction(pool);
 
         try {
-            const result = await SalaryModel.generatePayroll(reqUser, thangNam, LUONG_CO_SO, PHU_CAP_MAC_DINH, TY_LE_KHAU_TRU);
+            await transaction.begin();
+
+            const LUONG_CO_SO = 2340000;
+            const PHU_CAP_MAC_DINH = 500000;
+            const TY_LE_KHAU_TRU = 0.105; 
+
+            // 1. Tính lương hàng loạt (Truyền transaction + Tăng timeout lên 2 phút cho batch lớn)
+            const result = await SalaryModel.generatePayroll(reqUser, thangNam, LUONG_CO_SO, PHU_CAP_MAC_DINH, TY_LE_KHAU_TRU, transaction);
             
+            // 2. Ghi Audit Log TRONG Transaction
             await AuditService.logAction(reqUser, {
                 TableName: 'Salary.BangLuong',
                 Action: 'GENERATE_PAYROLL',
                 RecordID: thangNam,
                 NewData: { thangNam, LUONG_CO_SO, rowsProcessed: result.RowsInserted }
-            });
+            }, transaction);
+
+            await transaction.commit();
 
             return { 
                 message: `Đã chốt bảng lương tháng ${thangNam} thành công!`,
@@ -53,7 +63,8 @@ class SalaryService {
                 activeEmployees: activeCount
             };
         } catch (error) {
-            // Lỗi từ custom THROW trong SQL (50001) hoặc UNIQUE KEY
+            if (transaction) await transaction.rollback();
+            
             if (error.message.includes('Tháng này đã chốt lương') || error.message.includes('Violation of UNIQUE KEY')) {
                 const err = new Error(`Bảng lương tháng ${thangNam} đã được chốt từ trước.`);
                 err.statusCode = 409; throw err;
@@ -65,6 +76,63 @@ class SalaryService {
     // ==========================================
     // CÁC HÀM VIẾT THÊM (BỔ SUNG)
     // ==========================================
+
+    /**
+     * Logic tính toán xem trước (Preview) lương cá nhân dựa trên Chấm công
+     */
+    static async calculatePreview(reqUser, data) {
+        const { maNhanVien, thang, nam, luongCoBan } = data;
+        const thangNam = `${String(thang).padStart(2, '0')}/${nam}`;
+
+        // 1. Lấy diễn biến lương hiện tại
+        const currentSalary = await SalaryModel.getCurrentSalaryByMaNV(reqUser, maNhanVien);
+        
+        // 2. Lấy chấm công thực tế
+        const pool = await poolPromise;
+        const attQuery = `
+            SELECT 
+                COUNT(*) as NgayCong, 
+                SUM(ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) as TongPhutTre
+            FROM HR.ChamCong
+            WHERE MaNV = @MaNV AND FORMAT(NgayChamCong, 'MM/yyyy') = @ThangNam
+        `;
+        const attRes = await pool.request()
+            .input('MaNV', sql.VarChar, maNhanVien)
+            .input('ThangNam', sql.VarChar, thangNam)
+            .query(attQuery);
+        
+        const attendance = attRes.recordset[0] || { NgayCong: 0, TongPhutTre: 0 };
+
+        // 3. Lấy phụ cấp cố định
+        const pcQuery = `SELECT SUM(SoTien) as TongPhuCap FROM HR.PhuCapCoDinh WHERE MaNV = @MaNV AND IsActive = 1`;
+        const pcRes = await pool.request().input('MaNV', sql.VarChar, maNhanVien).query(pcQuery);
+        const phuCap = pcRes.recordset[0]?.TongPhuCap || 0;
+
+        // 4. Tính toán theo công thức nghiệp vụ
+        const heSo = currentSalary.HeSoLuong || 0;
+        const base = luongCoBan || 2340000;
+        const tyLeBH = 0.105;
+
+        const luongTheoCong = Math.round((heSo * base / 26.0) * attendance.NgayCong);
+        const tienBH = Math.round(heSo * base * tyLeBH);
+        const tienPhatTre = attendance.TongPhutTre * 1000;
+
+        const tongLuong = luongTheoCong + phuCap - tienBH - tienPhatTre;
+
+        return {
+            maNhanVien,
+            thangNam,
+            hoTen: currentSalary.HoTen || 'N/A',
+            heSoLuong: heSo,
+            ngayCong: attendance.NgayCong,
+            tongPhutTre: attendance.TongPhutTre,
+            luongTheoCong,
+            phuCap,
+            khauTruBH: tienBH,
+            tienPhatTre,
+            tongLuong: tongLuong > 0 ? tongLuong : 0
+        };
+    }
 
     /**
      * Logic tính toán và lưu lương riêng lẻ

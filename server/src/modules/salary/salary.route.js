@@ -246,6 +246,12 @@ router.post(
   salaryController.createMonthlySalary
 );
 
+router.post(
+  '/preview',
+  authorize(['db_Admin', 'db_HR_Payroll']),
+  salaryController.calculatePreview
+);
+
 /**
  * @swagger
  * /api/salary/payroll/generate:

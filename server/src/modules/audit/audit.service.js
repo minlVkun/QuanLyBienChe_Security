@@ -49,8 +49,8 @@ class AuditService {
     /**
      * Ghi log thủ công (Hỗ trợ Read Audit)
      */
-    static async logAction(reqUser, data) {
-        return await AuditModel.logManualAction(reqUser, data);
+    static async logAction(reqUser, data, transaction = null) {
+        return await AuditModel.logManualAction(reqUser, data, transaction);
     }
 }
 

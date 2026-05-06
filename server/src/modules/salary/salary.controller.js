@@ -90,6 +90,18 @@ const salaryController = {
         }
     },
 
+    // [POST] /api/salary/preview
+    async calculatePreview(req, res) {
+        try {
+            const payload = req.body;
+            const result = await SalaryService.calculatePreview(req.user, payload);
+            res.status(200).json({ success: true, data: result });
+        } catch (error) {
+            const code = error.statusCode || 500;
+            res.status(code).json({ success: false, message: error.message });
+        }
+    },
+
     // [POST] /api/salary/payroll/generate
     async generatePayroll(req, res) {
         try {

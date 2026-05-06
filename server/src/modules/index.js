@@ -22,6 +22,7 @@ function registerRoutes(app) {
   app.use('/api/configs', require('./systemConfig/config.route'));
   app.use('/api/attendance', require('./attendance/attendance.route'));
   app.use('/api/shifts', require('./shift/shift.route'));
+  app.use('/api/schedule', require('./schedule/schedule.route'));
 }
 
 module.exports = { registerRoutes };

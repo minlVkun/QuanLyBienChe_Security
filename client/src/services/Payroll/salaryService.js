@@ -47,6 +47,11 @@ const salaryService = {
     return response.data;
   },
 
+  calculatePreview: async (payload) => {
+    const response = await axiosClient.post('/salary/preview', payload);
+    return response.data;
+  },
+
   updatePayroll: async (id, payload) => {
     const response = await axiosClient.put(`/salary/payroll/${id}`, payload);
     return response.data;

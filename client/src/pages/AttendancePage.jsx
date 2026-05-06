@@ -48,16 +48,47 @@ const AttendancePage = () => {
     };
 
     const fetchPersonalHistory = useCallback(async () => {
+        console.log("[Attendance Debug] Bắt đầu gọi fetchPersonalHistory. User MaNV:", user?.MaNV);
+        if (!user?.MaNV) {
+            console.warn("[Attendance Debug] Bỏ qua vì không có MaNV");
+            return;
+        }
         try {
             const start = dayjs().startOf('month').format('YYYY-MM-DD');
             const end = dayjs().endOf('month').format('YYYY-MM-DD');
             const res = await attendanceService.getHistory(user.MaNV, start, end);
-            const list = Array.isArray(res.data) ? res.data : [];
+            console.log("[Attendance Debug] Full Response Personal:", res);
+
+            let list = [];
+            if (Array.isArray(res)) {
+                list = res;
+            } else if (res && Array.isArray(res.data)) {
+                list = res.data;
+            } else if (res && res.success && Array.isArray(res.data)) {
+                list = res.data;
+            }
+
+            console.log("[Attendance Debug] Final List Personal:", list);
             setPersonalData(list);
 
             const late = list.reduce((sum, item) => sum + (item.SoPhutDiTre || 0), 0);
-            const onTime = list.filter(item => (item.SoPhutDiTre || 0) === 0 && item.GioVao).length;
-            setStats({ totalDays: list.length, lateMinutes: late, onTimeDays: onTime });
+
+            // Đếm số ngày thực tế (unique days)
+            const uniqueDays = new Set(list.map(item => dayjs(item.NgayChamCong).format('YYYY-MM-DD'))).size;
+
+            // Tính tổng số phút làm việc
+            const totalWorkMinutes = list.reduce((sum, item) => {
+                if (item.GioVao && item.GioRa) {
+                    return sum + dayjs(item.GioRa).diff(dayjs(item.GioVao), 'minute');
+                }
+                return sum;
+            }, 0);
+
+            setStats({
+                totalDays: uniqueDays,
+                lateMinutes: late,
+                totalHours: (totalWorkMinutes / 60).toFixed(1)
+            });
         } catch (err) {
             console.error("Lỗi tải lịch sử cá nhân:", err);
         }
@@ -75,7 +106,18 @@ const AttendancePage = () => {
                 keyword
             };
             const res = await attendanceService.getAll(params);
-            setData(Array.isArray(res.data) ? res.data : []);
+            console.log("[Attendance Admin Debug] Full Response:", res);
+
+            let list = [];
+            if (Array.isArray(res)) {
+                list = res;
+            } else if (res && Array.isArray(res.data)) {
+                list = res.data;
+            } else if (res && res.success && Array.isArray(res.data)) {
+                list = res.data;
+            }
+
+            setData(list);
         } catch (err) {
             message.error(err.message || 'Không thể tải dữ liệu hệ thống');
         } finally {
@@ -84,12 +126,15 @@ const AttendancePage = () => {
     }, [isAdminOrHR, dateRange, maDonVi, trangThai, keyword]);
 
     useEffect(() => {
-        fetchPersonalHistory();
+        console.log("[Attendance Debug] useEffect triggered. Current User:", user);
+        if (user?.MaNV) {
+            fetchPersonalHistory();
+        }
         if (isAdminOrHR) {
             fetchAdminData();
             fetchDepartments();
         }
-    }, [fetchPersonalHistory, fetchAdminData, isAdminOrHR]);
+    }, [user?.MaNV, user?.role, fetchPersonalHistory, fetchAdminData, isAdminOrHR]);
 
     const handleExport = async () => {
         try {
@@ -163,6 +208,19 @@ const AttendancePage = () => {
             render: (min) => min > 0 ? <Text type="danger" strong>{min}p</Text> : <Text type="success">0</Text>
         },
         {
+            title: 'Thời lượng',
+            key: 'duration',
+            render: (_, r) => {
+                if (r.GioVao && r.GioRa) {
+                    const diff = dayjs(r.GioRa).diff(dayjs(r.GioVao), 'minute');
+                    const h = Math.floor(diff / 60);
+                    const m = diff % 60;
+                    return <Text strong>{h}h {m}p</Text>;
+                }
+                return '-';
+            }
+        },
+        {
             title: 'Trạng Thái',
             dataIndex: 'TrangThai',
             key: 'TrangThai',
@@ -171,6 +229,7 @@ const AttendancePage = () => {
                 if (status === 'Đủ công') color = 'success';
                 if (status === 'Thiếu giờ') color = 'warning';
                 if (status === 'Chưa hoàn tất') color = 'processing';
+                if (status === 'Quên checkout') color = 'error';
                 return <Tag color={color} className="rounded-full px-3">{status}</Tag>;
             }
         }
@@ -247,14 +306,18 @@ const AttendancePage = () => {
                             <Timer size={18} className="text-indigo-600" />
                             Thống kê tháng này
                         </Title>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
                                 <Text className="block text-[10px] uppercase font-bold text-blue-400 mb-1">Ngày công</Text>
-                                <Text strong className="text-3xl text-blue-700">{stats.totalDays}</Text>
+                                <Text strong className="text-2xl text-blue-700">{stats.totalDays}</Text>
                             </div>
                             <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-center">
-                                <Text className="block text-[10px] uppercase font-bold text-rose-400 mb-1">Số phút trễ</Text>
-                                <Text strong className="text-3xl text-rose-700">{stats.lateMinutes}</Text>
+                                <Text className="block text-[10px] uppercase font-bold text-rose-400 mb-1">Phút trễ</Text>
+                                <Text strong className="text-2xl text-rose-700">{stats.lateMinutes}</Text>
+                            </div>
+                            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                                <Text className="block text-[10px] uppercase font-bold text-emerald-400 mb-1">Giờ làm</Text>
+                                <Text strong className="text-2xl text-emerald-700">{stats.totalHours}</Text>
                             </div>
                         </div>
                     </Card>
@@ -443,7 +506,7 @@ const AttendancePage = () => {
                             />
                         </div>
                     </div>
-                    
+
                     <div className="bg-amber-50 p-3 rounded-xl flex items-start gap-3 border border-amber-100">
                         <AlertCircle size={16} className="text-amber-600 mt-0.5" />
                         <Text className="text-[11px] text-amber-800 leading-relaxed">

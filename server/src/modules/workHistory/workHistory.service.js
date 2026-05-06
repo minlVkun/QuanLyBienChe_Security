@@ -45,8 +45,8 @@ class WorkHistoryService {
             // Khởi tạo Transaction
             await transaction.begin(sql.ISOLATION_LEVEL.READ_COMMITTED);
 
-            // Bước 1: Lấy dữ liệu cũ để audit và validate
-            const oldUser = await EmployeeModel.getById(reqUser, targetMaNV);
+            // Bước 1: Lấy dữ liệu cũ để audit và validate (Sử dụng transaction để tránh deadlock)
+            const oldUser = await EmployeeModel.getById(reqUser, targetMaNV, transaction);
             if (!oldUser) throw new Error("Nhân viên đích không tồn tại");
 
             const today = new Date();

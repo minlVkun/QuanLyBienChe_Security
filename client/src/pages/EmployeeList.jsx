@@ -58,11 +58,11 @@ const EmployeeList = () => {
     const matchUnit = unitFilter === '' || unitFilter === 'All' ||
       String(emp.MaDonVi || '').trim() === String(unitFilter).trim() ||
       String(emp.TenDonVi || '').trim() === String(unitFilter).trim();
-      
-    const matchSearch = searchTerm === '' || 
+
+    const matchSearch = searchTerm === '' ||
       String(emp.HoTen || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(emp.MaNV || '').toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     return matchUnit && matchSearch;
   });
 
@@ -181,6 +181,7 @@ const EmployeeList = () => {
                 <th className="p-4 pl-6">Mã NV</th>
                 <th className="p-4">Nhân viên</th>
                 <th className="p-4">Chức vụ</th>
+                <th className="p-4">Ca làm việc</th>
                 <th className="p-4">Vai trò (Role)</th>
                 <th className="p-4 text-right pr-6">Thao tác</th>
               </tr>
@@ -225,6 +226,17 @@ const EmployeeList = () => {
                       </div>
                     </td>
                     <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-700 font-medium">
+                          {emp.TenCaLamViec || (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 text-[10px] font-bold border border-red-100">
+                              <AlertCircle size={10} /> CHƯA GÁN CA
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadge(emp.Role)}`}>
                         {roleLabels[emp.Role] || emp.Role}
                       </span>
@@ -261,7 +273,7 @@ const EmployeeList = () => {
               <>Đang hiển thị trang <b>{currentPage}</b> / {totalPages || 1} (Tổng <b>{totalItems}</b> kết quả)</>
             )}
           </span>
-          <Pagination 
+          <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}

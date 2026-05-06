@@ -59,13 +59,14 @@ export const AuthProvider = ({ children }) => {
       // 2. Giải mã Token để lấy thông tin mới nhất (Role, MaNV...)
       const decoded = jwtDecode(newToken);
       
-      // 3. Chuẩn hóa dữ liệu User (Ưu tiên data từ API, nếu thiếu thì lấy từ Token)
+      // 3. Chuẩn hóa dữ liệu User (Ưu tiên data từ API, nếu thiếu thì lấy từ Token hoặc giữ nguyên cái cũ)
       const normalizedUser = {
         ...(userData || {}),
-        UserID: decoded?.UserID || userData?.UserID,
-        Username: decoded?.Username || userData?.Username,
-        MaNV: decoded?.MaNV || userData?.MaNV,
-        role: decoded?.RoleName || decoded?.role || userData?.role || userData?.RoleName || ''
+        UserID: decoded?.UserID || userData?.UserID || user?.UserID,
+        Username: decoded?.Username || userData?.Username || user?.Username,
+        // Bảo vệ MaNV: Nếu không có MaNV mới, hãy giữ lại MaNV cũ của user đang đăng nhập
+        MaNV: userData?.MaNV || decoded?.MaNV || user?.MaNV,
+        role: userData?.role || decoded?.RoleName || decoded?.role || user?.role || ''
       };
 
       // 4. Lưu vào Storage & State

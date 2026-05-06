@@ -97,7 +97,7 @@ class AuditModel {
     /**
      * Ghi nhật ký thủ công cho các hành động không phải DML (ví dụ: Reveal, Export)
      */
-    static async logManualAction(reqUser, data) {
+    static async logManualAction(reqUser, data, transaction = null) {
         try {
             const tableName = data.tableName || data.TableName;
             const action = data.action || data.Action;
@@ -110,20 +110,20 @@ class AuditModel {
                 VALUES (@tableName, @action, @recordID, @oldData, @newData, @changedBy, GETUTCDATE())
             `;
             const inputs = [
-                { name: 'tableName', type: sql.NVarChar, value: tableName },
-                { name: 'action',    type: sql.NVarChar, value: action },
-                { name: 'recordID',  type: sql.NVarChar, value: recordID ? String(recordID) : null },
-                { name: 'oldData',   type: sql.NVarChar, value: oldData ? (typeof oldData === 'string' ? oldData : JSON.stringify(oldData)) : null },
-                { name: 'newData',   type: sql.NVarChar, value: newData ? (typeof newData === 'string' ? newData : JSON.stringify(newData)) : null },
-                { name: 'changedBy', type: sql.NVarChar, value: reqUser.MaNV || 'SYSTEM' }
+                { name: 'tableName', type: sql.NVarChar(100), value: tableName },
+                { name: 'action',    type: sql.NVarChar(20), value: action },
+                { name: 'recordID',  type: sql.NVarChar(50), value: recordID ? String(recordID) : null },
+                { name: 'oldData',   type: sql.NVarChar(sql.MAX), value: oldData ? (typeof oldData === 'string' ? oldData : JSON.stringify(oldData)) : null },
+                { name: 'newData',   type: sql.NVarChar(sql.MAX), value: newData ? (typeof newData === 'string' ? newData : JSON.stringify(newData)) : null },
+                { name: 'changedBy', type: sql.VarChar(50), value: reqUser.MaNV || 'SYSTEM' }
             ];
 
-            await DBHelper.queryWithContext(reqUser, query, inputs);
+            await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
             return true;
         } catch (error) {
             console.error(`[Model Error - AuditModel.logManualAction]:`, error);
-            // Không throw lỗi ở đây để tránh làm gián đoạn luồng nghiệp vụ chính
-            return false;
+            // THROW lỗi để caller có thể ROLLBACK nếu đang trong transaction
+            throw error;
         }
     }
 }

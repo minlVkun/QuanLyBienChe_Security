@@ -119,7 +119,7 @@ class EmployeeService {
 
             // Audit Log
             await AuditService.logAction(reqUser, {
-                TableName: 'HR.NhanVien_Internal',
+                TableName: 'HR.NhanVien',
                 Action: 'INSERT',
                 RecordID: newEmployee.MaNV,
                 NewData: { ...rawData, PasswordHash: '********' } // Mask password hash in logs
@@ -164,15 +164,23 @@ class EmployeeService {
         
         console.log(`[Service - updateEmployee] Kết quả: ${affectedRows} dòng bị tác động.`);
 
-        // Audit Log
-        if (affectedRows > 0) {
-            await AuditService.logAction(reqUser, {
-                TableName: 'HR.NhanVien_Internal',
-                Action: 'UPDATE',
-                RecordID: maNV,
-                OldData: existing,
-                NewData: updateData
-            });
+        // Audit Log - Bọc trong try-catch để không làm hỏng luồng chính
+        try {
+            if (affectedRows > 0) {
+                // Loại bỏ các trường nhạy cảm/dữ liệu lớn không cần thiết cho audit
+                const { PasswordHash, ...oldDataClean } = existing;
+                const { ...newDataClean } = updateData;
+
+                await AuditService.logAction(reqUser, {
+                    TableName: 'HR.NhanVien',
+                    Action: 'UPDATE',
+                    RecordID: maNV,
+                    OldData: oldDataClean,
+                    NewData: newDataClean
+                });
+            }
+        } catch (auditErr) {
+            console.error("[EmployeeService] Lỗi ghi Audit Log (non-critical):", auditErr.message);
         }
 
         return affectedRows;
@@ -195,7 +203,7 @@ class EmployeeService {
         // Audit Log
         if (affectedRows > 0) {
             await AuditService.logAction(reqUser, {
-                TableName: 'HR.NhanVien_Internal',
+                TableName: 'HR.NhanVien',
                 Action: 'SOFT_DELETE',
                 RecordID: maNV,
                 OldData: existing

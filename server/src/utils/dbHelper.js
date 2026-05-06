@@ -47,7 +47,7 @@ class DBHelper {
      * @param {Object}   [transaction] - SQL Transaction object nếu đang chạy trong giao dịch
      * @returns {Promise<import('mssql').IResult<any>>}
      */
-    static async queryWithContext(reqUser, queryString, inputs = [], rlsCtx = null, transaction = null) {
+    static async queryWithContext(reqUser, queryString, inputs = [], options = {}, transaction = null) {
 
         // ── 1. Resolve RLS context (reqUser.rlsContext nếu có, fallback tính inline) ────
         //
@@ -55,7 +55,7 @@ class DBHelper {
         // ƯU tiên 2: rlsCtx truyền trực tiếp vào hàm (dùng cho internal calls / tests).
         // Fallback:   tính toán inline từ reqUser (trường hợp không qua middleware).
         const resolvedCtx = (reqUser && reqUser.rlsContext) ? reqUser.rlsContext
-            : rlsCtx ? rlsCtx
+            : options.rlsCtx ? options.rlsCtx
                 : null;
 
         let maNV, maDonVi, bypassRLS, isDeptHead, roleName;
@@ -103,19 +103,10 @@ class DBHelper {
         });
 
         // ── 6. Xây dựng và thực thi Atomic Batch ──────────────────────────────────
-        //
-        // TÍNH NGUYÊN TỬ (ATOMICITY):
-        //   sp_set_session_context + query chạy trong MỘT lô duy nhất.
-        //   Không có request nào khác có thể chen ngang → context luôn khớp với query.
-        //
-        // @read_only = 0 (bắt buộc với Connection Pool):
-        //   Cho phép ghi đè context ở đầu mỗi lô mới.
-        //   Nếu dùng @read_only=1 và connection được tái sử dụng từ pool,
-        //   SQL Server sẽ ném lỗi "context key already set as read-only".
-        //
-        // An toàn SQL Injection:
-        //   Tất cả giá trị context đi qua request.input() (parameterized).
-        //   queryString do caller cung cấp nhưng cũng phải dùng @params.
+        if (options && options.timeout) {
+            request.requestTimeout = options.timeout;
+        }
+
         const batch = `
             EXEC sp_set_session_context @key = N'BypassRLS',  @value = @_ctx_Bypass,  @read_only = 0;
             EXEC sp_set_session_context @key = N'IsDeptHead', @value = @_ctx_IsDept,  @read_only = 0;

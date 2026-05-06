@@ -11,6 +11,7 @@ const createEmployeeSchema = z.object({
     QueQuan: z.string().trim().min(1, "Quê quán không được để trống").optional().or(z.literal('')),
     MaDonVi: z.string().trim().min(1, "Mã đơn vị không được để trống"),
     MaChucVu: z.string().trim().min(1, "Mã chức vụ không được để trống"),
+    MaCaLamViec: z.string().trim().min(1, "Mã ca làm việc không được để trống").max(10, "Mã ca tối đa 10 ký tự").optional().or(z.literal('')),
     NgayVaoBienChe: z.string().trim().or(z.date()).refine(val => val ? !isNaN(new Date(val).getTime()) : true, { message: "Ngày vào biên chế không hợp lệ" }).optional(),
 });
 
@@ -24,6 +25,7 @@ const updateEmployeeSchema = z.object({
     QueQuan: z.string().trim().min(1, "Quê quán không được để trống").optional().or(z.literal('')),
     MaDonVi: z.string().trim().min(1, "Mã đơn vị không được để trống").optional(),
     MaChucVu: z.string().trim().min(1, "Mã chức vụ không được để trống").optional(),
+    MaCaLamViec: z.string().trim().min(1, "Mã ca làm việc không được để trống").max(10, "Mã ca tối đa 10 ký tự").optional().or(z.literal('')),
     NgayVaoBienChe: z.string().trim().or(z.date()).refine(val => val ? !isNaN(new Date(val).getTime()) : true, { message: "Ngày vào biên chế không hợp lệ" }).optional(),
 });
 

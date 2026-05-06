@@ -10,8 +10,22 @@ const { authorize } = require('../../middlewares/authMiddleware');
  *   description: Module Quản lý Chấm công
  */
 
+const rateLimit = require('express-rate-limit');
+
+// Cấu hình Rate Limit: Tối đa 10 lần / 1 phút / mỗi IP
+const checkLimit = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 phút
+    max: 10,
+    message: {
+        success: false,
+        message: "Bạn thao tác quá nhanh. Vui lòng đợi 1 phút để tiếp tục chấm công."
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // 1. Employee self-service (Mọi nhân viên đã đăng nhập)
-router.post('/check', authorize(), attendanceController.checkInOut);
+router.post('/check', checkLimit, authorize(), attendanceController.checkInOut);
 router.get('/history/:maNV', authorize(), attendanceController.getHistory);
 
 // 2. Admin & HR Management

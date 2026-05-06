@@ -7,9 +7,10 @@ class AttendanceModel {
      */
     static async getTodayAttendance(reqUser, maNV, today, transaction = null) {
         const query = `
-            SELECT ChamCongID, GioVao, GioRa 
+            SELECT TOP 1 ChamCongID, GioVao, GioRa 
             FROM [HR].[ChamCong] WITH (UPDLOCK) 
             WHERE MaNV = @MaNV AND NgayChamCong = @Today
+            ORDER BY GioVao DESC
         `;
         const inputs = [
             { name: 'MaNV', type: sql.VarChar(20), value: maNV },
@@ -19,9 +20,9 @@ class AttendanceModel {
         return result.recordset[0] || null;
     }
 
-    static async getById(reqUser, id) {
+    static async getById(reqUser, id, transaction = null) {
         const query = `SELECT * FROM [HR].[ChamCong] WHERE ChamCongID = @Id`;
-        const result = await DBHelper.queryWithContext(reqUser, query, [{ name: 'Id', type: sql.Int, value: id }]);
+        const result = await DBHelper.queryWithContext(reqUser, query, [{ name: 'Id', type: sql.Int, value: id }], null, transaction);
         return result.recordset[0] || null;
     }
 
@@ -49,8 +50,8 @@ class AttendanceModel {
             SET GioRa = GETDATE()
             WHERE ChamCongID = @ID;
 
-            -- Gọi Store Procedure tính toán đi trễ/về sớm
-            EXEC [HR].[sp_TinhCongNgay] @MaNV = @MaNV, @NgayChamCong = @Today;
+            -- Gọi Store Procedure tính toán đi trễ/về sớm bằng ID
+            EXEC [HR].[sp_TinhCongNgay] @ChamCongID = @ID;
         `;
         const inputs = [
             { name: 'ID', type: sql.Int, value: id },
@@ -64,17 +65,21 @@ class AttendanceModel {
      * Lấy danh sách chấm công toàn bộ (Dành cho Admin/HR)
      */
     static async getAll(reqUser, filters) {
-        const { fromDate, toDate, maDonVi, trangThai, keyword } = filters;
-        
+        const { fromDate, toDate, maDonVi, trangThai, keyword, page = 1, limit = 50 } = filters;
+        const offset = (page - 1) * limit;
+
         let query = `
-            SELECT cc.*, nv.HoTen, dv.TenDonVi
+            SELECT cc.*, nv.HoTen, dv.TenDonVi, COUNT(*) OVER() as TotalRows
             FROM [HR].[ChamCong] cc
             INNER JOIN [HR].[NhanVien] nv ON cc.MaNV = nv.MaNV
             LEFT JOIN [HR].[DonVi] dv ON nv.MaDonVi = dv.MaDonVi
             WHERE 1=1
         `;
         
-        const inputs = [];
+        const inputs = [
+            { name: 'Offset', type: sql.Int, value: offset },
+            { name: 'Limit', type: sql.Int, value: limit }
+        ];
 
         if (fromDate) {
             query += ` AND cc.NgayChamCong >= @FromDate`;
@@ -97,7 +102,10 @@ class AttendanceModel {
             inputs.push({ name: 'Keyword', type: sql.NVarChar(100), value: `%${keyword}%` });
         }
 
-        query += ` ORDER BY cc.NgayChamCong DESC, cc.GioVao DESC`;
+        query += ` 
+            ORDER BY cc.NgayChamCong DESC, cc.GioVao DESC
+            OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
+        `;
 
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
@@ -112,12 +120,8 @@ class AttendanceModel {
             UPDATE [HR].[ChamCong]
             SET GioVao = @GioVao, GioRa = @GioRa
             WHERE ChamCongID = @Id;
-
-            -- Lấy lại MaNV và Ngay để tính lại công
-            DECLARE @MaNV VARCHAR(20), @Ngay DATE;
-            SELECT @MaNV = MaNV, @Ngay = NgayChamCong FROM [HR].[ChamCong] WHERE ChamCongID = @Id;
             
-            EXEC [HR].[sp_TinhCongNgay] @MaNV = @MaNV, @NgayChamCong = @Ngay;
+            EXEC [HR].[sp_TinhCongNgay] @ChamCongID = @Id;
         `;
         const inputs = [
             { name: 'Id', type: sql.Int, value: id },
@@ -137,7 +141,7 @@ class AttendanceModel {
             INNER JOIN [HR].[NhanVien] nv ON cc.MaNV = nv.MaNV
             WHERE cc.MaNV = @MaNV 
               AND cc.NgayChamCong BETWEEN @FromDate AND @ToDate
-            ORDER BY cc.NgayChamCong DESC
+            ORDER BY cc.NgayChamCong DESC, cc.GioVao DESC
         `;
         const inputs = [
             { name: 'MaNV', type: sql.VarChar(20), value: maNV },
@@ -146,6 +150,36 @@ class AttendanceModel {
         ];
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
+    }
+
+    /**
+     * Tìm các bản ghi chưa check-out từ những ngày trước
+     */
+    static async getOpenSessions(reqUser, maNV, today, transaction = null) {
+        const query = `
+            SELECT ChamCongID, NgayChamCong, GioVao 
+            FROM [HR].[ChamCong] 
+            WHERE MaNV = @MaNV AND NgayChamCong < @Today AND GioRa IS NULL
+        `;
+        const inputs = [
+            { name: 'MaNV', type: sql.VarChar(20), value: maNV },
+            { name: 'Today', type: sql.Date, value: today }
+        ];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
+        return result.recordset || [];
+    }
+
+    /**
+     * Tự động đóng bản ghi (Quên check-out)
+     */
+    static async autoCloseSession(reqUser, id, transaction = null) {
+        const query = `
+            UPDATE [HR].[ChamCong]
+            SET GioRa = GioVao, -- Gán giờ ra bằng giờ vào (tính là vắng/không có công)
+                TrangThai = N'Quên checkout'
+            WHERE ChamCongID = @Id
+        `;
+        return await DBHelper.queryWithContext(reqUser, query, [{ name: 'Id', type: sql.Int, value: id }], null, transaction);
     }
 }
 
