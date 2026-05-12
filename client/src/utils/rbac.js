@@ -57,6 +57,33 @@ export const TAB_PERMISSIONS = {
   'allowance': [ROLES.ADMIN, ROLES.HR_PAYROLL, ROLES.DEPT_HEAD],
 };
 
+// ─── Phân quyền Hành động (Button/Action level) ───────────────────────────────
+// Định nghĩa các tổ hợp quyền cho từng tính năng cụ thể
+export const ACTION_PERMISSIONS = {
+  // LƯƠNG (Payroll)
+  PAYROLL_GENERATE: [ROLES.ADMIN, ROLES.HR_PAYROLL],
+  PAYROLL_EDIT: [ROLES.ADMIN, ROLES.HR_PAYROLL],
+  PAYROLL_DELETE: [ROLES.ADMIN, ROLES.HR_PAYROLL],
+  PAYROLL_PROMOTE: [ROLES.ADMIN, ROLES.HR_PAYROLL],
+  PAYROLL_EXPORT: [ROLES.ADMIN, ROLES.HR_PAYROLL, ROLES.DEPT_HEAD],
+
+  // NHÂN SỰ (HR)
+  EMPLOYEE_CREATE: [ROLES.ADMIN, ROLES.HR_HUMAN],
+  EMPLOYEE_EDIT: [ROLES.ADMIN, ROLES.HR_HUMAN],
+  EMPLOYEE_DELETE: [ROLES.ADMIN], // Chỉ Admin mới được xóa hồ sơ gốc
+  EMPLOYEE_VIEW_ALL: [ROLES.ADMIN, ROLES.HR_HUMAN, ROLES.HR_PAYROLL, ROLES.DEPT_HEAD],
+
+  // LỊCH LÀM VIỆC (Schedule)
+  SCHEDULE_MANAGE: [ROLES.ADMIN, ROLES.HR_HUMAN],
+
+  // CHẤM CÔNG (Attendance)
+  ATTENDANCE_MANAGE: [ROLES.ADMIN, ROLES.HR_HUMAN, ROLES.HR_PAYROLL],
+
+  // HỆ THỐNG (System)
+  SYSTEM_CONFIG: [ROLES.ADMIN],
+  AUDIT_VIEW: [ROLES.ADMIN],
+};
+
 // ─── Hàm kiểm tra quyền ───────────────────────────────────────────────────────
 
 /**
@@ -89,4 +116,14 @@ export const canAccessMenu = (userRole, path) => {
  */
 export const canAccessTab = (userRole, tabKey) => {
   return hasRole(userRole, TAB_PERMISSIONS[tabKey] ?? null);
+};
+
+/**
+ * Kiểm tra user có quyền thực hiện một hành động cụ thể không.
+ * @param {string} userRole
+ * @param {string} actionKey - Key của hành động trong ACTION_PERMISSIONS
+ * @returns {boolean}
+ */
+export const canPerform = (userRole, actionKey) => {
+  return hasRole(userRole, ACTION_PERMISSIONS[actionKey] ?? null);
 };

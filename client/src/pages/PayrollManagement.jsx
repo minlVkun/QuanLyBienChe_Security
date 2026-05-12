@@ -13,6 +13,8 @@ import { useAuth } from '../context/AuthContext';
 import salaryService from '../services/Payroll/salaryService';
 import UnitSelect from '../components/common/UnitSelect';
 import * as XLSX from 'xlsx';
+import { canPerform } from '../utils/rbac';
+import HasPermission from '../components/shared/HasPermission';
 
 import CustomButton from '../components/shared/CustomButton';
 import CustomSelect from '../components/shared/CustomSelect';
@@ -98,7 +100,9 @@ const PayrollManagement = () => {
     return { value: d.format('MM/YYYY'), label: `Tháng ${d.format('MM/YYYY')}` };
   });
 
-  const canManage = ['db_Admin', 'db_HR_Payroll'].includes(user?.role);
+  const canManage = canPerform(user?.role, 'PAYROLL_EDIT');
+  const canGenerate = canPerform(user?.role, 'PAYROLL_GENERATE');
+  const canExport = canPerform(user?.role, 'PAYROLL_EXPORT');
 
   const fetchPayroll = React.useCallback(async () => {
     try {
@@ -343,28 +347,34 @@ const PayrollManagement = () => {
         </div>
 
         <Space size="middle" className="flex-wrap">
-          <CustomButton variant="outline" icon={FileSpreadsheet} onClick={handleExportExcel}>
-            Xuất Excel
-          </CustomButton>
-          {canManage && (
+          <HasPermission action="PAYROLL_EXPORT">
+            <CustomButton variant="outline" icon={FileSpreadsheet} onClick={handleExportExcel}>
+              Xuất Excel
+            </CustomButton>
+          </HasPermission>
+          {canGenerate && (
             <>
-              <CustomButton
-                variant="outline"
-                icon={FileEdit}
-                onClick={() => setIsModalOpen(true)}
-                className="h-12 px-6 border-blue-600 text-blue-600 hover:bg-blue-50"
-              >
-                Chốt Cá Nhân
-              </CustomButton>
-              <CustomButton
-                variant="primary"
-                icon={Calculator}
-                onClick={handleGeneratePayroll}
-                isLoading={loading}
-                className="h-12 px-8 shadow-xl shadow-blue-100"
-              >
-                Tính Bảng Lương
-              </CustomButton>
+              <HasPermission action="PAYROLL_EDIT">
+                <CustomButton
+                  variant="outline"
+                  icon={FileEdit}
+                  onClick={() => setIsModalOpen(true)}
+                  className="h-12 px-6 border-blue-600 text-blue-600 hover:bg-blue-50"
+                >
+                  Chốt Cá Nhân
+                </CustomButton>
+              </HasPermission>
+              <HasPermission action="PAYROLL_GENERATE">
+                <CustomButton
+                  variant="primary"
+                  icon={Calculator}
+                  onClick={handleGeneratePayroll}
+                  isLoading={loading}
+                  className="h-12 px-8 shadow-xl shadow-blue-100"
+                >
+                  Tính Bảng Lương
+                </CustomButton>
+              </HasPermission>
             </>
           )}
         </Space>

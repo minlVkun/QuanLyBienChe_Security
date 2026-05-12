@@ -6,6 +6,8 @@ import departmentService from '../services/System/departmentService';
 import AttendanceButton from '../components/Attendance/AttendanceButton';
 import { useAuth } from '../context/AuthContext';
 import dayjs from 'dayjs';
+import { canPerform } from '../utils/rbac';
+import HasPermission from '../components/shared/HasPermission';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -13,8 +15,8 @@ const { Option } = Select;
 
 const AttendancePage = () => {
     const { user } = useAuth();
-    const isAdminOrHR = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll', 'db_DeptHead'].includes(user?.role);
-    const canEdit = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll'].includes(user?.role);
+    const isAdminOrHR = canPerform(user?.role, 'ATTENDANCE_MANAGE') || user?.role === 'db_DeptHead';
+    const canEdit = canPerform(user?.role, 'ATTENDANCE_MANAGE');
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
@@ -350,15 +352,17 @@ const AttendancePage = () => {
                     <Title level={4} className="m-0">Báo cáo chấm công hệ thống</Title>
                     <Text className="text-gray-400">Dữ liệu tổng hợp từ toàn bộ nhân viên và phòng ban</Text>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<FileDown size={18} />}
-                    onClick={handleExport}
-                    className="bg-emerald-600 hover:bg-emerald-700 border-none h-11 px-8 rounded-xl font-bold shadow-lg shadow-emerald-100"
-                    loading={loading}
-                >
-                    Xuất Excel
-                </Button>
+                <HasPermission action="ATTENDANCE_MANAGE">
+                    <Button
+                        type="primary"
+                        icon={<FileDown size={18} />}
+                        onClick={handleExport}
+                        className="bg-emerald-600 hover:bg-emerald-700 border-none h-11 px-8 rounded-xl font-bold shadow-lg shadow-emerald-100"
+                        loading={loading}
+                    >
+                        Xuất Excel
+                    </Button>
+                </HasPermission>
             </div>
 
             <Divider className="mb-6 mt-2" />

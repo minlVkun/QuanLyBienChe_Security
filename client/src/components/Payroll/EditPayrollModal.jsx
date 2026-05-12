@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, InputNumber, Input, message } from 'antd';
+import { Modal, Form, InputNumber, Input, message, Switch } from 'antd';
 import { Edit3 } from 'lucide-react';
 import salaryService from '../../services/Payroll/salaryService';
 
@@ -12,7 +12,8 @@ const EditPayrollModal = ({ isOpen, onClose, onRefresh, payrollData }) => {
       form.setFieldsValue({
         phuCap: payrollData.PhuCap,
         khauTru: payrollData.TienKhauTruBH,
-        ghiChu: payrollData.GhiChu
+        ghiChu: payrollData.GhiChu,
+        daThanhToan: payrollData.DaThanhToan === 1
       });
     }
   }, [isOpen, payrollData, form]);
@@ -77,6 +78,14 @@ const EditPayrollModal = ({ isOpen, onClose, onRefresh, payrollData }) => {
             />
           </Form.Item>
         </div>
+
+        <Form.Item name="daThanhToan" label="Trạng thái thanh toán" valuePropName="checked">
+          <Switch 
+            checkedChildren="Đã thanh toán" 
+            unCheckedChildren="Chưa thanh toán" 
+            className="bg-gray-200"
+          />
+        </Form.Item>
         <Form.Item name="ghiChu" label="Ghi chú">
           <Input.TextArea rows={3} placeholder="Lý do điều chỉnh..." />
         </Form.Item>

@@ -13,6 +13,9 @@ import isoWeek from 'dayjs/plugin/isoWeek';
 import scheduleService from '../services/Schedule/scheduleService';
 import axiosClient from '../api/axiosClient';
 import BulkAssignModal from '../components/Schedule/BulkAssignModal';
+import { canPerform } from '../utils/rbac';
+import HasPermission from '../components/shared/HasPermission';
+import { useAuth } from '../context/AuthContext';
 
 dayjs.extend(isoWeek);
 const { RangePicker } = DatePicker;
@@ -86,6 +89,8 @@ const WeekCalendar = ({ schedules, weekStart, onDelete, canEdit }) => {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 const SchedulePage = () => {
+    const { user } = useAuth();
+    const canManage = canPerform(user?.role, 'SCHEDULE_MANAGE');
     const [schedules,   setSchedules]   = useState([]);
     const [shifts,      setShifts]      = useState([]);
     const [employees,   setEmployees]   = useState([]);
@@ -210,14 +215,16 @@ const SchedulePage = () => {
             title: 'Thao tác',
             width: 90,
             render: (_, r) => (
-                <Space size={4}>
-                    <Tooltip title="Sửa">
-                        <Button size="small" icon={<Pencil size={13}/>} onClick={() => openEdit(r)} />
-                    </Tooltip>
-                    <Popconfirm title="Xóa lịch này?" onConfirm={() => handleDelete(r.LichID)} okText="Xóa" cancelText="Hủy">
-                        <Button size="small" danger icon={<Trash2 size={13}/>} />
-                    </Popconfirm>
-                </Space>
+                <HasPermission action="SCHEDULE_MANAGE">
+                    <Space size={4}>
+                        <Tooltip title="Sửa">
+                            <Button size="small" icon={<Pencil size={13}/>} onClick={() => openEdit(r)} />
+                        </Tooltip>
+                        <Popconfirm title="Xóa lịch này?" onConfirm={() => handleDelete(r.LichID)} okText="Xóa" cancelText="Hủy">
+                            <Button size="small" danger icon={<Trash2 size={13}/>} />
+                        </Popconfirm>
+                    </Space>
+                </HasPermission>
             )
         }
     ];
@@ -242,12 +249,14 @@ const SchedulePage = () => {
                         onClick={() => fetchSchedules(1)}
                         loading={loading}
                     >Làm mới</Button>
-                    <Button
-                        type="primary"
-                        icon={<Zap size={14}/>}
-                        onClick={() => setShowBulk(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 border-0"
-                    >Phân ca hàng loạt</Button>
+                    <HasPermission action="SCHEDULE_MANAGE">
+                        <Button
+                            type="primary"
+                            icon={<Zap size={14}/>}
+                            onClick={() => setShowBulk(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 border-0"
+                        >Phân ca hàng loạt</Button>
+                    </HasPermission>
                 </Space>
             </div>
 
@@ -312,7 +321,7 @@ const SchedulePage = () => {
                                     )}
                                     weekStart={weekStart}
                                     onDelete={handleDelete}
-                                    canEdit={true}
+                                    canEdit={canManage}
                                 />
                             </div>
                         )

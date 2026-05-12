@@ -18,7 +18,7 @@ class UserService {
             pagination: {
                 total: totalRows,
                 page: parseInt(params.page) || 1,
-                limit: parseInt(params.limit) || 10
+                limit: parseInt(params.limit) || 100
             }
         };
     }

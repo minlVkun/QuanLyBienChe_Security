@@ -41,8 +41,8 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // GỌI API QUA SERVICE
-      const res = await userService.getAll();
+      // GỌI API QUA SERVICE: Tăng limit lên 500 để lấy hầu hết user cho việc lọc client-side
+      const res = await userService.getAll({ limit: 500 });
       
       const data = res?.users || [];
       setUsers(data);
@@ -118,8 +118,18 @@ const UserManagement = () => {
             <UserCog className="mr-3 text-red-600" size={28} />
             Quản trị tài khoản
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-medium">Thiết lập quyền hạn (RBAC) và trạng thái truy cập hệ thống.</p>
+          <p className="text-sm text-gray-500 mt-1 font-medium italic">
+            Tổng cộng: <span className="text-blue-600 font-bold">{users.length}</span> tài khoản · 
+            Đang lọc: <span className="text-orange-600 font-bold">{filteredUsers.length}</span>
+          </p>
         </div>
+        <button 
+          onClick={fetchUsers}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm"
+        >
+          <Search size={16} className={loading ? 'animate-spin' : ''} />
+          Làm mới dữ liệu
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

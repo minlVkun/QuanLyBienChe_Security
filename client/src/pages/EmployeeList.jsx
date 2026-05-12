@@ -148,7 +148,7 @@ const EmployeeList = () => {
           <h1 className="text-2xl font-bold text-gray-900">Danh sách Nhân viên</h1>
           <p className="text-sm text-gray-500 mt-1">Quản lý thông tin, vai trò và hồ sơ của toàn bộ nhân viên.</p>
         </div>
-        <HasPermission requiredRoles={['db_Admin', 'db_HR_Human']}>
+        <HasPermission action="EMPLOYEE_CREATE">
           <CustomButton variant="primary" icon={Plus} onClick={handleAddClick} className="w-full md:w-auto">
             Thêm nhân viên
           </CustomButton>
@@ -244,8 +244,10 @@ const EmployeeList = () => {
                     <td className="p-4 text-right pr-6">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Xem chi tiết" onClick={() => navigate(`/employees/${emp.MaNV}`)}><Eye className="w-4 h-4" /></button>
-                        <HasPermission requiredRoles={['db_Admin', 'db_HR_Human']}>
+                        <HasPermission action="EMPLOYEE_EDIT">
                           <button className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Chỉnh sửa" onClick={() => handleEditClick(emp)}><Edit className="w-4 h-4" /></button>
+                        </HasPermission>
+                        <HasPermission action="EMPLOYEE_DELETE">
                           <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Xóa" onClick={() => handleDeleteClick(emp.MaNV)}><Trash2 className="w-4 h-4" /></button>
                         </HasPermission>
                       </div>

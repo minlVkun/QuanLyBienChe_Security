@@ -6,7 +6,7 @@ class UserModel {
     /**
      * Lấy danh sách user kèm thông tin nhân viên, phân trang và tìm kiếm
      */
-    static async findAll(reqUser, { page = 1, limit = 10, search = '' }) {
+    static async findAll(reqUser, { page = 1, limit = 100, search = '' }) {
         const offset = (page - 1) * limit;
         const searchQuery = search ? `AND (u.Username LIKE @search OR nv.HoTen LIKE @search)` : '';
 

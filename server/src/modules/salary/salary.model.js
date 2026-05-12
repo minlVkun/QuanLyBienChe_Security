@@ -66,7 +66,7 @@ class SalaryModel {
             DELETE FROM Salary.BangLuong WHERE ThangNam = @ThangNam;
 
             -- BƯỚC 2: Tính toán và Chốt lương
-            INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, GhiChu)
+            INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, GhiChu, DaThanhToan)
             SELECT 
                 dbl.MaNV, 
                 @ThangNam, 
@@ -89,7 +89,8 @@ class SalaryModel {
                             - (ISNULL(att.TongPhutTre, 0) * @PhatDiTre) 
                         , 0)
                 END) AS ThucLanh,
-                N'Chốt lương tự động (Ngày công: ' + CAST(ISNULL(att.NgayCong, 0) AS NVARCHAR) + N')'
+                N'Chốt lương tự động (Ngày công: ' + CAST(ISNULL(att.NgayCong, 0) AS NVARCHAR) + N')',
+                0 -- DaThanhToan mặc định là chưa thanh toán
             FROM Salary.DienBienLuong dbl
             -- Join lấy Phụ cấp cố định
             LEFT JOIN (
@@ -142,8 +143,8 @@ class SalaryModel {
             END
             ELSE
             BEGIN
-                INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, NgayChot, GhiChu)
-                VALUES (@MaNV, @ThangNam, @HeSoLuong, @LuongCoBan, @PhuCap, @KhauTru, @TongLuong, GETDATE(), N'Lưu kết quả tính toán từ Service')
+                INSERT INTO Salary.BangLuong (MaNV, ThangNam, HeSoLuong, LuongCoSo, PhuCap, TienKhauTruBH, ThucLanh, NgayChot, GhiChu, DaThanhToan)
+                VALUES (@MaNV, @ThangNam, @HeSoLuong, @LuongCoBan, @PhuCap, @KhauTru, @TongLuong, GETDATE(), N'Lưu kết quả tính toán từ Service', 0)
             END
         `;
         const inputs = [
@@ -288,6 +289,7 @@ class SalaryModel {
             SET PhuCap          = @PhuCap,
                 TienKhauTruBH   = @KhauTru,
                 GhiChu          = @GhiChu,
+                DaThanhToan     = @DaThanhToan,
                 -- Công thức: Giữ nguyên phần lương theo ngày công (= ThucLanh cũ + PhuCap cũ + KhauTru cũ)
                 -- sau đó cộng/trừ với giá trị PhụCấp/KhấuTrừ mới
                 ThucLanh = CASE
@@ -299,9 +301,10 @@ class SalaryModel {
         `;
         const inputs = [
             { name: 'ID',      type: sql.Int,            value: id },
-            { name: 'PhuCap',  type: sql.Decimal(18,2),  value: data.phuCap  || 0 },
-            { name: 'KhauTru', type: sql.Decimal(18,2),  value: data.khauTru || 0 },
-            { name: 'GhiChu',  type: sql.NVarChar,       value: data.ghiChu  || '' }
+            { name: 'PhuCap',      type: sql.Decimal(18,2),  value: data.phuCap  || 0 },
+            { name: 'KhauTru',     type: sql.Decimal(18,2),  value: data.khauTru || 0 },
+            { name: 'GhiChu',      type: sql.NVarChar,       value: data.ghiChu  || '' },
+            { name: 'DaThanhToan', type: sql.Int,            value: data.daThanhToan ? 1 : 0 }
         ];
         await DBHelper.queryWithContext(reqUser, query, inputs);
     }

@@ -1,8 +1,8 @@
 import axiosClient from '../../api/axiosClient';
 
 const userService = {
-  getAll: async () => {
-    const response = await axiosClient.get('/users');
+  getAll: async (params = {}) => {
+    const response = await axiosClient.get('/users', { params });
     return response.data;
   },
 

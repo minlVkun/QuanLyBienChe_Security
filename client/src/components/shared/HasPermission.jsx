@@ -1,30 +1,39 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Lock } from 'lucide-react';
+import { ACTION_PERMISSIONS } from '../../utils/rbac';
 
 /**
  * Component bảo vệ giao diện theo phân quyền (RBAC)
  * 
  * @param {ReactNode} children - Nội dung được hiển thị nếu user có quyền
- * @param {Array} requiredRoles - Mảng các quyền (role) được phép truy cập. Ví dụ: ['db_Admin', 'db_HR_Human']
- * @param {ReactNode} fallback - Giao diện hiển thị thay thế nếu không có quyền (mặc định là null - ẩn đi)
+ * @param {Array} requiredRoles - Mảng các quyền (role) được phép truy cập (Thủ công)
+ * @param {string} action - Key hành động định nghĩa trong ACTION_PERMISSIONS (Ưu tiên)
+ * @param {ReactNode} fallback - Giao diện hiển thị thay thế nếu không có quyền
  * @param {boolean} showWarning - Bật cờ này nếu muốn hiển thị một cảnh báo mặc định thay vì ẩn đi
  */
 const HasPermission = ({ 
   children, 
   requiredRoles = [], 
+  action = null,
   fallback = null,
   showWarning = false 
 }) => {
   const { user } = useAuth();
 
+  // Xác định danh sách roles được phép: Ưu tiên action key, sau đó mới đến mảng requiredRoles
+  let roles = requiredRoles;
+  if (action && ACTION_PERMISSIONS[action]) {
+    roles = ACTION_PERMISSIONS[action];
+  }
+
   // Nếu không yêu cầu quyền gì đặc biệt, luôn cho phép render
-  if (!requiredRoles || requiredRoles.length === 0) {
+  if (!roles || roles.length === 0) {
     return <>{children}</>;
   }
 
   // Kiểm tra user có tồn tại và role của user có nằm trong danh sách cho phép không
-  const hasAccess = user && user.role && requiredRoles.includes(user.role);
+  const hasAccess = user && user.role && roles.includes(user.role);
 
   if (hasAccess) {
     return <>{children}</>;
