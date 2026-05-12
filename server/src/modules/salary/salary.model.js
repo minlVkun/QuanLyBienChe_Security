@@ -60,7 +60,7 @@ class SalaryModel {
      * Nghiệp vụ tính lương hàng loạt (Tích hợp Chấm công thực tế)
      * Quy tắc: Lương = (Hệ số * Lương cơ sở / 26) * Ngày công thực tế + Phụ cấp - Khấu trừ bảo hiểm - Phạt đi trễ
      */
-    static async generatePayroll(reqUser, thangNam, luongCoSo, phuCapChung, tyLeKhauTru, transaction = null) {
+    static async generatePayroll(reqUser, thangNam, luongCoSo, phuCapChung, tyLeKhauTru, ngayCongChuan = 26.0, phatDiTre = 1000, transaction = null) {
         const query = `
             -- BƯỚC 1: Xóa dữ liệu cũ (Idempotency)
             DELETE FROM Salary.BangLuong WHERE ThangNam = @ThangNam;
@@ -72,15 +72,23 @@ class SalaryModel {
                 @ThangNam, 
                 dbl.HeSoLuong, 
                 @LuongCoSo, 
-                (@PhuCapChung + ISNULL(pc.TongPhuCap, 0)) AS TongPhuCap, 
-                (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru) AS TienBH,
-                -- CÔNG THỨC TÍNH LƯƠNG CHÍNH XÁC:
-                ROUND(
-                    ((dbl.HeSoLuong * @LuongCoSo / 26.0) * ISNULL(att.NgayCong, 0)) -- Lương theo ngày công (Mặc định 26 ngày chuẩn)
-                    + (@PhuCapChung + ISNULL(pc.TongPhuCap, 0))                     -- Cộng phụ cấp
-                    - (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru)                  -- Trừ bảo hiểm
-                    - (ISNULL(att.TongPhutTre, 0) * 1000)                           -- Phạt đi trễ (VD: 1,000đ/phút)
-                , 0) AS ThucLanh,
+                (CASE WHEN ISNULL(att.NgayCong, 0) > 0 THEN (@PhuCapChung + ISNULL(pc.TongPhuCap, 0)) ELSE 0 END) AS TongPhuCap, 
+                (CASE WHEN ISNULL(att.NgayCong, 0) >= 14 THEN (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru) ELSE 0 END) AS TienBH,
+                -- CÔNG THỨC TÍNH LƯƠNG CHÍNH XÁC VÀ AN TOÀN:
+                (CASE 
+                    WHEN ROUND(
+                            ((dbl.HeSoLuong * @LuongCoSo / @NgayCongChuan) * ISNULL(att.NgayCong, 0)) -- Lương theo ngày công
+                            + (CASE WHEN ISNULL(att.NgayCong, 0) > 0 THEN (@PhuCapChung + ISNULL(pc.TongPhuCap, 0)) ELSE 0 END) -- Cộng phụ cấp
+                            - (CASE WHEN ISNULL(att.NgayCong, 0) >= 14 THEN (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru) ELSE 0 END) -- Trừ bảo hiểm
+                            - (ISNULL(att.TongPhutTre, 0) * @PhatDiTre) -- Phạt đi trễ
+                        , 0) < 0 THEN 0
+                    ELSE ROUND(
+                            ((dbl.HeSoLuong * @LuongCoSo / @NgayCongChuan) * ISNULL(att.NgayCong, 0)) 
+                            + (CASE WHEN ISNULL(att.NgayCong, 0) > 0 THEN (@PhuCapChung + ISNULL(pc.TongPhuCap, 0)) ELSE 0 END) 
+                            - (CASE WHEN ISNULL(att.NgayCong, 0) >= 14 THEN (dbl.HeSoLuong * @LuongCoSo * @TyLeKhauTru) ELSE 0 END) 
+                            - (ISNULL(att.TongPhutTre, 0) * @PhatDiTre) 
+                        , 0)
+                END) AS ThucLanh,
                 N'Chốt lương tự động (Ngày công: ' + CAST(ISNULL(att.NgayCong, 0) AS NVARCHAR) + N')'
             FROM Salary.DienBienLuong dbl
             -- Join lấy Phụ cấp cố định
@@ -94,8 +102,8 @@ class SalaryModel {
             LEFT JOIN (
                 SELECT 
                     MaNV, 
-                    COUNT(*) as NgayCong, 
-                    SUM(ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) as TongPhutTre
+                    SUM(CASE WHEN TrangThai NOT IN (N'Quên checkout', N'Chưa hoàn tất') THEN 1 ELSE 0 END) as NgayCong, 
+                    SUM(CASE WHEN TrangThai NOT IN (N'Quên checkout', N'Chưa hoàn tất') THEN (ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) ELSE 0 END) as TongPhutTre
                 FROM HR.ChamCong
                 WHERE FORMAT(NgayChamCong, 'MM/yyyy') = @ThangNam
                 GROUP BY MaNV
@@ -108,7 +116,9 @@ class SalaryModel {
             { name: 'ThangNam', type: sql.VarChar, value: thangNam },
             { name: 'LuongCoSo', type: sql.Decimal(18,2), value: luongCoSo },
             { name: 'PhuCapChung', type: sql.Decimal(18,2), value: phuCapChung },
-            { name: 'TyLeKhauTru', type: sql.Decimal(5,3), value: tyLeKhauTru }
+            { name: 'TyLeKhauTru', type: sql.Decimal(5,3), value: tyLeKhauTru },
+            { name: 'NgayCongChuan', type: sql.Decimal(5,2), value: ngayCongChuan },
+            { name: 'PhatDiTre', type: sql.Decimal(18,2), value: phatDiTre }
         ];
         
         const result = await DBHelper.queryWithContext(reqUser, query, inputs, { timeout: 120000 }, transaction);
@@ -202,36 +212,36 @@ class SalaryModel {
 
     // 5. Lấy danh sách bảng lương tổng hợp (Có lọc theo tháng và đơn vị)
     static async getPayslipHistory(reqUser, maNV) {
+        // Dùng vw_BangLuong (Secure View) — kế thừa masking tầng DB
         const query = `
-            SELECT bl.*, nv.HoTen
-            FROM Salary.BangLuong bl
-            JOIN HR.NhanVien nv ON bl.MaNV = nv.MaNV
-            WHERE bl.MaNV = @MaNV
-            ORDER BY RIGHT(bl.ThangNam, 4) DESC, LEFT(bl.ThangNam, 2) DESC;
+            SELECT v.*
+            FROM Salary.vw_BangLuong v
+            WHERE v.MaNV = @MaNV
+            ORDER BY RIGHT(v.ThangNam, 4) DESC, LEFT(v.ThangNam, 2) DESC;
         `;
         const inputs = [{ name: 'MaNV', type: sql.VarChar, value: maNV }];
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
     }
     // 6. Lấy danh sách bảng lương tổng hợp (Kèm bộ lọc)
+    // Dùng Salary.vw_BangLuong (Secure View) để tự động áp dụng masking theo role
     static async getPayrollList(reqUser, filters) {
         let query = `
             SELECT 
-                bl.ID_BangLuong,
-                bl.MaNV,
-                nv.HoTen,
-                dv.TenDonVi,
-                bl.ThangNam,
-                bl.HeSoLuong,
-                bl.LuongCoSo,
-                bl.PhuCap,
-                bl.TienKhauTruBH,
-                bl.ThucLanh,
-                bl.NgayChot,
-                bl.GhiChu
-            FROM Salary.BangLuong bl
-            JOIN HR.NhanVien nv ON bl.MaNV = nv.MaNV
-            JOIN HR.DonVi dv ON nv.MaDonVi = dv.MaDonVi
+                v.ID_BangLuong,
+                v.MaNV,
+                v.HoTen,
+                v.TenDonVi,
+                v.ThangNam,
+                v.HeSoLuong,     -- NULL nếu DeptHead xem người khác
+                v.LuongCoSo,     -- NULL nếu DeptHead xem người khác
+                v.PhuCap,        -- NULL nếu DeptHead xem người khác
+                v.TienKhauTruBH, -- NULL nếu DeptHead xem người khác
+                v.ThucLanh,      -- DeptHead LUÔN thấy (quản lý ngân sách)
+                v.NgayChot,
+                v.DaThanhToan,
+                v.GhiChu
+            FROM Salary.vw_BangLuong v
             WHERE 1=1
         `;
 
@@ -239,18 +249,18 @@ class SalaryModel {
 
         // Lọc theo Tháng/Năm nếu có
         if (filters.thangNam) {
-            query += ` AND bl.ThangNam = @ThangNam`;
+            query += ` AND v.ThangNam = @ThangNam`;
             inputs.push({ name: 'ThangNam', type: sql.VarChar, value: filters.thangNam });
         }
 
         // Lọc theo Mã đơn vị nếu có
         if (filters.maDonVi) {
-            query += ` AND nv.MaDonVi = @MaDonVi`;
+            query += ` AND v.MaDonVi = @MaDonVi`;
             inputs.push({ name: 'MaDonVi', type: sql.VarChar, value: filters.maDonVi });
         }
 
         // Sắp xếp mặc định theo Đơn vị rồi đến Tên nhân viên
-        query += ` ORDER BY dv.TenDonVi ASC, nv.HoTen ASC;`;
+        query += ` ORDER BY v.TenDonVi ASC, v.HoTen ASC;`;
 
         const result = await DBHelper.queryWithContext(reqUser, query, inputs);
         return result.recordset;
@@ -275,17 +285,23 @@ class SalaryModel {
     static async updatePayroll(reqUser, id, data) {
         const query = `
             UPDATE Salary.BangLuong
-            SET PhuCap = @PhuCap,
-                TienKhauTruBH = @KhauTru,
-                GhiChu = @GhiChu,
-                ThucLanh = (HeSoLuong * LuongCoSo) + @PhuCap - @KhauTru
+            SET PhuCap          = @PhuCap,
+                TienKhauTruBH   = @KhauTru,
+                GhiChu          = @GhiChu,
+                -- Công thức: Giữ nguyên phần lương theo ngày công (= ThucLanh cũ + PhuCap cũ + KhauTru cũ)
+                -- sau đó cộng/trừ với giá trị PhụCấp/KhấuTrừ mới
+                ThucLanh = CASE
+                    WHEN (ThucLanh + TienKhauTruBH - PhuCap + @PhuCap - @KhauTru) < 0
+                    THEN 0
+                    ELSE (ThucLanh + TienKhauTruBH - PhuCap + @PhuCap - @KhauTru)
+                END
             WHERE ID_BangLuong = @ID
         `;
         const inputs = [
-            { name: 'ID', type: sql.Int, value: id },
-            { name: 'PhuCap', type: sql.Decimal(18,2), value: data.phuCap || 0 },
-            { name: 'KhauTru', type: sql.Decimal(18,2), value: data.khauTru || 0 },
-            { name: 'GhiChu', type: sql.NVarChar, value: data.ghiChu || '' }
+            { name: 'ID',      type: sql.Int,            value: id },
+            { name: 'PhuCap',  type: sql.Decimal(18,2),  value: data.phuCap  || 0 },
+            { name: 'KhauTru', type: sql.Decimal(18,2),  value: data.khauTru || 0 },
+            { name: 'GhiChu',  type: sql.NVarChar,       value: data.ghiChu  || '' }
         ];
         await DBHelper.queryWithContext(reqUser, query, inputs);
     }

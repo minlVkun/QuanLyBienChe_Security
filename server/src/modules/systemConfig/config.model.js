@@ -23,9 +23,9 @@ class ConfigModel {
             try {
                 const pool = await poolPromise;
                 const result = await pool.request().query(`
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 1, @read_only = 0;
                     SELECT ConfigKey, ConfigValue, Description, ISNULL(ValueType, 'string') as ValueType FROM [System].[Config];
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 0, @read_only = 0;
                 `);
 
                 configCache.clear();
@@ -72,13 +72,13 @@ class ConfigModel {
                 .input('ConfigValue', sql.NVarChar(4000), newValue)
                 .input('Description', sql.NVarChar(500), newDescription || oldDescription)
                 .query(`
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 1, @read_only = 0;
                     UPDATE [System].[Config] 
                     SET ConfigValue = @ConfigValue, 
                         Description = @Description
                     WHERE ConfigKey = @ConfigKey;
                     SELECT @@ROWCOUNT AS AffectedRows;
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 0, @read_only = 0;
                 `);
 
             if (updateResult.recordset[0].AffectedRows === 0) {
@@ -90,7 +90,7 @@ class ConfigModel {
                 .input('ConfigKey', sql.VarChar(50), key)
                 .input('OldValue', sql.NVarChar(4000), `Value: ${oldValue} | Desc: ${oldDescription}`)
                 .input('NewValue', sql.NVarChar(4000), `Value: ${newValue} | Desc: ${newDescription}`)
-                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV || 'ADMIN')
+                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV)
                 .query(`
                     INSERT INTO [System].[ConfigAuditLog] (ConfigKey, OldValue, NewValue, UpdatedBy, UpdatedAt)
                     VALUES (@ConfigKey, @OldValue, @NewValue, @UpdatedBy, GETDATE());
@@ -142,16 +142,16 @@ class ConfigModel {
                 .input('Desc', sql.NVarChar(500), description || '')
                 .input('Type', sql.VarChar(20), type || 'string')
                 .query(`
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 1, @read_only = 0;
                     INSERT INTO [System].[Config] (ConfigKey, ConfigValue, Description, ValueType)
                     VALUES (@Key, @Value, @Desc, @Type);
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 0, @read_only = 0;
                 `);
 
             await transaction.request()
                 .input('Key', sql.VarChar(50), key)
                 .input('NewValue', sql.NVarChar(4000), `Created: ${value}`)
-                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV || 'ADMIN')
+                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV)
                 .query(`
                     INSERT INTO [System].[ConfigAuditLog] (ConfigKey, OldValue, NewValue, UpdatedBy, UpdatedAt)
                     VALUES (@Key, 'NEW_RECORD', @NewValue, @UpdatedBy, GETDATE());
@@ -185,15 +185,15 @@ class ConfigModel {
             await transaction.request()
                 .input('Key', sql.VarChar(50), key)
                 .query(`
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 1, @read_only = 0;
                     DELETE FROM [System].[Config] WHERE ConfigKey = @Key;
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                    EXEC sp_set_session_context @key = N'BypassRLS', @value = 0, @read_only = 0;
                 `);
 
             await transaction.request()
                 .input('Key', sql.VarChar(50), key)
                 .input('OldValue', sql.NVarChar(4000), old.recordset[0].ConfigValue)
-                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV || 'ADMIN')
+                .input('UpdatedBy', sql.VarChar(20), reqUser.MaNV)
                 .query(`
                     INSERT INTO [System].[ConfigAuditLog] (ConfigKey, OldValue, NewValue, UpdatedBy, UpdatedAt)
                     VALUES (@Key, @OldValue, 'DELETED', @UpdatedBy, GETDATE());

@@ -32,9 +32,21 @@ class AttendanceService {
             const record = await AttendanceModel.getTodayAttendance(reqUser, maNV, today, transaction);
             console.log(`[Attendance] Trạng thái hôm nay (${today}) của NV ${maNV}:`, record ? `Đã có (ID: ${record.ChamCongID}, Vào: ${record.GioVao}, Ra: ${record.GioRa})` : "Chưa có bản ghi");
 
+            // TÍCH HỢP SCHEDULE: Kiểm tra lịch làm việc hôm nay
+            const checkQuery = `SELECT 1 FROM [HR].[LichLamViec] WHERE MaNV = @MaNV AND Ngay = @NgayLam`;
+            const checkRes = await DBHelper.queryWithContext(reqUser, checkQuery, [
+                { name: 'MaNV', type: sql.VarChar, value: maNV },
+                { name: 'NgayLam', type: sql.Date, value: today }
+            ], null, transaction);
+            const hasSchedule = checkRes.recordset.length > 0;
+
             let action = "";
             // Nếu chưa có bản ghi hôm nay HOẶC bản ghi mới nhất đã hoàn tất (đã có GioRa) -> Tạo bản ghi mới (Check-in)
             if (!record || record.GioRa) {
+                if (!hasSchedule) {
+                    const err = new Error("Bạn không có lịch làm việc trong ngày hôm nay. Vui lòng liên hệ HR hoặc đăng ký OT.");
+                    err.statusCode = 403; throw err;
+                }
                 console.log(`[Attendance] Thực hiện CREATE NEW Check-in cho MaNV ${maNV}`);
                 await AttendanceModel.createCheckIn(reqUser, maNV, today, transaction);
                 action = "check-in";
@@ -175,6 +187,43 @@ class AttendanceService {
         XLSX.utils.book_append_sheet(wb, ws, "ChamCong");
         
         return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    }
+
+    /**
+     * Chạy job đánh dấu vắng mặt
+     */
+    static async markAbsencesForScheduled(reqUser, dateString) {
+        // Chỉ HR/Admin mới được chạy job thủ công
+        const isAdminOrHR = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll'].includes(reqUser.role);
+        if (!isAdminOrHR) {
+            const err = new Error("Bạn không có quyền thực hiện chức năng này.");
+            err.statusCode = 403; throw err;
+        }
+
+        const date = dateString || new Date().toISOString().split('T')[0];
+        
+        const pool = await poolPromise;
+        const transaction = new sql.Transaction(pool);
+        try {
+            await transaction.begin();
+            
+            const count = await AttendanceModel.markAbsencesForScheduled(reqUser, date, transaction);
+            
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.ChamCong',
+                Action: 'BATCH_INSERT',
+                RecordID: `Batch_${date}`,
+                Description: `Đã đánh dấu vắng mặt cho ${count} nhân viên ngày ${date}`
+            }, transaction);
+
+            await transaction.commit();
+            return { message: `Đã đánh dấu vắng mặt cho ${count} nhân viên ngày ${date}`, count };
+        } catch (err) {
+            if (transaction) {
+                try { await transaction.rollback(); } catch (rbErr) { /* ignore */ }
+            }
+            throw err;
+        }
     }
 }
 

@@ -181,6 +181,24 @@ class AttendanceModel {
         `;
         return await DBHelper.queryWithContext(reqUser, query, [{ name: 'Id', type: sql.Int, value: id }], null, transaction);
     }
+
+    /**
+     * Tự động đánh dấu vắng mặt không phép cho các nhân viên có lịch nhưng không chấm công hôm nay
+     */
+    static async markAbsencesForScheduled(reqUser, date, transaction = null) {
+        const query = `
+            INSERT INTO [HR].[ChamCong] (MaNV, NgayChamCong, TrangThai)
+            SELECT l.MaNV, l.Ngay, N'Vắng mặt không phép'
+            FROM [HR].[LichLamViec] l
+            LEFT JOIN [HR].[ChamCong] cc ON l.MaNV = cc.MaNV AND l.Ngay = cc.NgayChamCong
+            WHERE l.Ngay = @Date AND cc.ChamCongID IS NULL;
+
+            SELECT @@ROWCOUNT as InsertedCount;
+        `;
+        const inputs = [{ name: 'Date', type: sql.Date, value: date }];
+        const result = await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);
+        return result.recordset[0].InsertedCount;
+    }
 }
 
 module.exports = AttendanceModel;

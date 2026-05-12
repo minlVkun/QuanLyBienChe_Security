@@ -1,17 +1,19 @@
 import React from 'react';
 import { Plus, BookOpen, Building2, Edit, Trash2 } from 'lucide-react';
 
-const TabDegrees = ({ degrees, onAdd, onEdit, onDelete }) => {
+const TabDegrees = ({ degrees, onAdd, onEdit, onDelete, canEdit }) => {
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-      <div className="flex justify-end mb-4 px-6 pt-6">
-        <button 
-          onClick={onAdd}
-          className="flex items-center text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" /> Thêm bằng cấp
-        </button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end mb-4 px-6 pt-6">
+          <button 
+            onClick={onAdd}
+            className="flex items-center text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Thêm bằng cấp
+          </button>
+        </div>
+      )}
 
       <div className="px-6 pb-6 space-y-4">
         {degrees && degrees.length > 0 ? (
@@ -34,20 +36,22 @@ const TabDegrees = ({ degrees, onAdd, onEdit, onDelete }) => {
                   Năm tốt nghiệp: {deg.NamTotNghiep}
                 </span>
                 
-                <div className="flex gap-2 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button 
-                    onClick={() => onEdit(deg)} 
-                    className="p-2 text-gray-500 hover:text-blue-600 bg-white rounded-lg shadow-sm border hover:border-blue-200 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(deg.ID_Bang)} 
-                    className="p-2 text-gray-500 hover:text-red-600 bg-white rounded-lg shadow-sm border hover:border-red-200 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="flex gap-2 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button 
+                      onClick={() => onEdit(deg)} 
+                      className="p-2 text-gray-500 hover:text-blue-600 bg-white rounded-lg shadow-sm border hover:border-blue-200 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(deg.ID_Bang)} 
+                      className="p-2 text-gray-500 hover:text-red-600 bg-white rounded-lg shadow-sm border hover:border-red-200 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))

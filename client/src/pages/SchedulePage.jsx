@@ -90,7 +90,7 @@ const SchedulePage = () => {
     const [shifts,      setShifts]      = useState([]);
     const [employees,   setEmployees]   = useState([]);
     const [loading,     setLoading]     = useState(false);
-    const [pagination,  setPagination]  = useState({ total: 0, page: 1, limit: 50 });
+    const [pagination,  setPagination]  = useState({ total: 0, page: 1, limit: 500 });
 
     // Bộ lọc
     const [dateRange,   setDateRange]   = useState([dayjs().startOf('isoWeek'), dayjs().endOf('isoWeek')]);

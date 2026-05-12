@@ -79,18 +79,6 @@ async function fetchUserFromDB(userID) {
         return null;
     }
 
-    // XỬ LÝ TRƯỜNG HỢP MAPPING BROKEN (Fail-safe):
-    if (!user.MaNV) {
-        if (user.RoleName && user.RoleName.trim() === 'db_Admin') {
-            user.MaNV = 'SYSTEM_ADMIN';
-            user.MaDonVi = 'ALL';
-        } else {
-            console.warn(`[authMiddleware] UserID ${userID} (${user.RoleName}) chưa được map với nhân sự. Gán UNASSIGNED.`);
-            user.MaNV = 'UNASSIGNED';
-            user.MaDonVi = 'UNASSIGNED';
-        }
-    }
-
     return user;
 }
 
@@ -173,14 +161,20 @@ const authorize = (allowanceRoles = []) => {
                 });
             }
 
-            // Xây dựng đối tượng req.user chính thức từ server.
-            // FAIL-CLOSED: Validate MaDonVi
-            // Bắt buộc phải có MaDonVi đối với người dùng không phải db_Admin
-            if ((!userFromDB.MaDonVi || userFromDB.MaDonVi === 'ALL') && userFromDB.RoleName !== 'db_Admin') {
-                return res.status(403).json({
-                    success: false,
-                    message: 'User không có MaDonVi hợp lệ'
-                });
+            // ── BƯỚC 3.5: Kiểm tra liên kết định danh (MaNV/MaDonVi) ────────────
+            // FAIL-CLOSED: RLS yêu cầu MaNV/MaDonVi để hoạt động.
+            // Ngoại lệ: Admin và HR (vì họ có quyền xem toàn hệ thống - BypassRLS).
+            const GLOBAL_ROLES = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll'];
+            const isGlobal = GLOBAL_ROLES.includes(userFromDB.RoleName);
+
+            if (!isGlobal) {
+                // DeptHead và Employee BẮT BUỘC phải có MaNV và MaDonVi
+                if (!userFromDB.MaNV || !userFromDB.MaDonVi || userFromDB.MaDonVi === 'ALL') {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Tài khoản '${userFromDB.RoleName}' chưa được liên kết với hồ sơ Nhân sự hoặc Phòng ban. Vui lòng liên hệ Admin.`
+                    });
+                }
             }
 
             // Xây dựng đối tượng req.user chính thức từ server.

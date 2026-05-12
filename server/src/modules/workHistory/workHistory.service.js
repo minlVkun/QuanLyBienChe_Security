@@ -69,19 +69,15 @@ class WorkHistoryService {
                 maDonVi: newMaDonVi
             });
 
-            // Bước 5: Ghi Audit Log (Giả sử AuditModel có hỗ trợ transaction request)
-            const auditQuery = `
-                INSERT INTO [System].[Audit] (TableName, Action, OldData, NewData, ChangedBy, ChangedDate, RecordID)
-                VALUES (@TableName, @Action, @OldData, @NewData, @ChangedBy, GETDATE(), @RecordID)
-            `;
-            const auditRequest = transaction.request();
-            auditRequest.input('TableName', sql.NVarChar, 'HR.QuaTrinhCongTac');
-            auditRequest.input('Action', sql.NVarChar, 'TRANSFER');
-            auditRequest.input('OldData', sql.NVarChar, JSON.stringify({ MaDonVi: oldUser.MaDonVi, MaChucVu: oldUser.MaChucVu }));
-            auditRequest.input('NewData', sql.NVarChar, JSON.stringify({ MaDonVi: newMaDonVi, MaChucVu: newMaChucVu, LyDo: lyDo }));
-            auditRequest.input('ChangedBy', sql.VarChar, reqUser.MaNV || 'SYSTEM');
-            auditRequest.input('RecordID', sql.NVarChar, targetMaNV);
-            await auditRequest.query(auditQuery);
+            // Bước 5: Ghi Audit Log sử dụng AuditService hỗ trợ transaction
+            await AuditService.logAction(reqUser, {
+                TableName: 'HR.QuaTrinhCongTac',
+                Action: 'TRANSFER',
+                RecordID: targetMaNV,
+                OldData: { MaDonVi: oldUser.MaDonVi, MaChucVu: oldUser.MaChucVu },
+                NewData: { MaDonVi: newMaDonVi, MaChucVu: newMaChucVu, LyDo: lyDo },
+                Description: `Điều động nhân sự MaNV: ${targetMaNV} từ ${oldUser.TenDonVi} sang đơn vị mới.`
+            }, transaction);
 
             // Hoàn tất
             await transaction.commit();

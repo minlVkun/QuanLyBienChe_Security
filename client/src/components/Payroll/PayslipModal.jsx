@@ -10,9 +10,10 @@ const { Title, Text } = Typography;
 const PayslipModal = ({ open, onClose, payslip }) => {
   if (!payslip) return null;
 
-  // Định dạng tiền tệ
+  // Định dạng tiền tệ hoặc hiển thị che mờ
   const formatMoney = (amount) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+    if (amount === '***') return <Tag color="default" className="font-mono font-bold border-none bg-gray-100">BẢO MẬT ***</Tag>;
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount) || 0);
   };
 
   return (
@@ -64,24 +65,32 @@ const PayslipModal = ({ open, onClose, payslip }) => {
           labelStyle={{ background: '#fafafa', fontWeight: 'bold', width: '250px' }}
         >
           <Descriptions.Item label="Lương cơ sở (Quy định)">
-            {formatMoney(payslip.LuongCoSo || 0)}
+            {formatMoney(payslip.LuongCoSo)}
           </Descriptions.Item>
           <Descriptions.Item label="Hệ số lương">
-            <Tag color="purple" className="m-0 font-bold">x {payslip.HeSoLuong || 0}</Tag>
+            {payslip.HeSoLuong === '***' ? (
+              <Tag color="default" className="m-0 font-mono font-bold border-none bg-gray-100">***</Tag>
+            ) : (
+              <Tag color="purple" className="m-0 font-bold">x {payslip.HeSoLuong || 0}</Tag>
+            )}
           </Descriptions.Item>
           <Descriptions.Item label="Lương tính theo hệ số">
             <Text strong className="text-blue-600">
-              {formatMoney((payslip.LuongCoSo || 0) * (payslip.HeSoLuong || 1))}
+              {payslip.HeSoLuong === '***' || payslip.LuongCoSo === '***' ? (
+                <Tag color="default" className="font-mono font-bold border-none bg-gray-100">***</Tag>
+              ) : (
+                formatMoney((Number(payslip.LuongCoSo) || 0) * (Number(payslip.HeSoLuong) || 1))
+              )}
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Phụ cấp">
-            <Text className="text-emerald-600">
-              + {formatMoney(payslip.PhuCap || 0)}
+            <Text className="text-emerald-600 font-bold">
+              {payslip.PhuCap === '***' ? <Tag color="default" className="font-mono font-bold border-none bg-gray-100">***</Tag> : `+ ${formatMoney(payslip.PhuCap)}`}
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Các khoản khấu trừ (Bảo hiểm, Thuế...)">
-            <Text type="danger">
-              - {formatMoney(payslip.TienKhauTruBH || payslip.KhauTru || 0)}
+            <Text type="danger" className="font-bold">
+              {payslip.TienKhauTruBH === '***' ? <Tag color="default" className="font-mono font-bold border-none bg-gray-100">***</Tag> : `- ${formatMoney(payslip.TienKhauTruBH || payslip.KhauTru)}`}
             </Text>
           </Descriptions.Item>
         </Descriptions>

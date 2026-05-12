@@ -13,7 +13,7 @@ class AttendanceController {
                 message: result.action === "check-in" ? "Check-in thành công" : "Check-out thành công"
             });
         } catch (err) {
-            console.error(`[Controller - Attendance - checkInOut] Error:`, err.message);
+            console.error(`[Controller - Attendance - checkInOut] Error:\n`, err.stack);
             const statusCode = (err.number === 2627 || err.number === 2601) ? 409 : (err.statusCode || 500);
             return res.status(statusCode).json({
                 success: false,
@@ -102,6 +102,19 @@ class AttendanceController {
             
             return res.status(200).send(buffer);
         } catch (err) {
+            return res.status(err.statusCode || 500).json({ success: false, message: err.message });
+        }
+    }
+    /**
+     * API: POST /api/attendance/mark-absences (Admin/HR)
+     */
+    static async markAbsences(req, res) {
+        try {
+            const { date } = req.body;
+            const result = await AttendanceService.markAbsencesForScheduled(req.user, date);
+            return res.status(200).json({ success: true, message: result.message, count: result.count });
+        } catch (err) {
+            console.error(`[Controller - Attendance - markAbsences] Error:`, err.message);
             return res.status(err.statusCode || 500).json({ success: false, message: err.message });
         }
     }

@@ -127,9 +127,9 @@ class AuthService {
         const result = await pool.request()
             .input('UserID', require('../../config/db').sql.Int, userID)
             .query(`
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
+                EXEC sp_set_session_context @key = N'BypassRLS', @value = 1, @read_only = 0;
                 SELECT UserID, Username, PasswordHash, TrangThai FROM [System].[User] WHERE UserID = @UserID;
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
+                EXEC sp_set_session_context @key = N'BypassRLS', @value = 0, @read_only = 0;
             `);
 
         const user = result.recordset[0];

@@ -236,9 +236,11 @@ const EmployeeDetail = () => {
               </div>
             </div>
             
-            <button onClick={() => setIsEditModalOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-xl shadow-sm transition-all">
-              <Edit className="w-4 h-4" /> Chỉnh sửa
-            </button>
+            {['db_Admin', 'db_HR_Human'].includes(userRole) && (
+              <button onClick={() => setIsEditModalOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-xl shadow-sm transition-all">
+                <Edit className="w-4 h-4" /> Chỉnh sửa
+              </button>
+            )}
           </div>
         </div>
 
@@ -337,6 +339,7 @@ const EmployeeDetail = () => {
                 {activeTab === 'degrees' && (
                   <TabDegrees 
                     degrees={degrees} 
+                    canEdit={['db_Admin', 'db_HR_Human'].includes(userRole)}
                     onAdd={() => { setEditingDegree(null); setIsDegreeModalOpen(true); }}
                     onEdit={(deg) => { setEditingDegree(deg); setIsDegreeModalOpen(true); }}
                     onDelete={handleDeleteDegree}
@@ -358,6 +361,7 @@ const EmployeeDetail = () => {
                 {activeTab === 'discipline' && (
                   <TabDiscipline 
                     disciplines={disciplines}
+                    canEdit={['db_Admin', 'db_HR_Human', 'db_HR_Payroll'].includes(userRole)}
                     onAdd={() => { setEditingDiscipline(null); setIsDisciplineModalOpen(true); }}
                     onEdit={(item) => { setEditingDiscipline(item); setIsDisciplineModalOpen(true); }}
                     onDelete={handleDeleteDiscipline}

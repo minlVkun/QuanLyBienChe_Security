@@ -1,7 +1,7 @@
 import React from 'react';
 import { Award, Plus, Edit, Trash2 } from 'lucide-react';
 
-const TabDiscipline = ({ disciplines, onAdd, onEdit, onDelete }) => {
+const TabDiscipline = ({ disciplines, onAdd, onEdit, onDelete, canEdit }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "---";
     return new Date(dateString).toLocaleDateString('vi-VN');
@@ -9,14 +9,16 @@ const TabDiscipline = ({ disciplines, onAdd, onEdit, onDelete }) => {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-      <div className="flex justify-end mb-4 px-6 pt-6">
-        <button 
-          onClick={onAdd}
-          className="flex items-center text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1.5" /> Thêm quyết định
-        </button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end mb-4 px-6 pt-6">
+          <button 
+            onClick={onAdd}
+            className="flex items-center text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Thêm quyết định
+          </button>
+        </div>
+      )}
 
       <div className="px-6 pb-6">
         {disciplines && disciplines.length > 0 ? (
@@ -36,20 +38,22 @@ const TabDiscipline = ({ disciplines, onAdd, onEdit, onDelete }) => {
                   <p className="text-sm text-gray-700 leading-relaxed mt-2">{item.NoiDung}</p>
                 </div>
 
-                <div className="absolute top-4 right-4 flex gap-2 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <button 
-                    onClick={() => onEdit(item)} 
-                    className="p-1.5 text-gray-500 hover:text-blue-600 bg-white rounded-md shadow-sm border hover:border-blue-200"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item.RecordID)} 
-                    className="p-1.5 text-gray-500 hover:text-red-600 bg-white rounded-md shadow-sm border hover:border-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button 
+                      onClick={() => onEdit(item)} 
+                      className="p-1.5 text-gray-500 hover:text-blue-600 bg-white rounded-md shadow-sm border hover:border-blue-200"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(item.RecordID)} 
+                      className="p-1.5 text-gray-500 hover:text-red-600 bg-white rounded-md shadow-sm border hover:border-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

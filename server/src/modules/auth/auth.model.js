@@ -18,6 +18,7 @@
 // có thể bỏ qua bất kỳ chính sách RLS nào áp dụng cho bảng User trong tương lai.
 
 const { sql, poolPromise } = require('../../config/db');
+const DBHelper = require('../../utils/dbHelper');
 
 class AuthModel {
     /**
@@ -33,133 +34,132 @@ class AuthModel {
      * @returns {Promise<{UserID, Username, PasswordHash, RoleName, MaNV}|undefined>}
      */
     static async getUserByUsername(username) {
-        const pool = await poolPromise;
+        const query = `
+            SELECT
+                u.UserID,
+                u.Username,
+                u.PasswordHash,
+                u.RoleName,
+                u.TrangThai,
+                n.MaNV
+            FROM [System].[User] u
+            LEFT JOIN [HR].[NhanVien] n ON u.UserID = n.UserID
+            WHERE u.Username = @Username;
+        `;
+        
+        const result = await DBHelper.queryWithContext(null, query, 
+            [{ name: 'Username', type: sql.NVarChar(100), value: username }],
+            {
+                rlsCtx: {
+                    bypassRLS: 1,
+                    maNV: '',
+                    roleName: 'db_Admin'
+                }
+            }
+        );
 
-        // BẢO MẬT: Dùng Atomic Batch với SystemAuth=1 để bypass RLS khi JOIN HR.NhanVien.
-        // Nếu không có SystemAuth=1, RLS policy trên HR.NhanVien sẽ lọc bỏ dòng nhân viên
-        // (vì SESSION_CONTEXT(N'MaNV') chưa được gán tại thời điểm login) → MaNV = NULL.
-        // SystemAuth được đặt lại về 0 ngay sau SELECT trên CÙNG connection (Atomic Batch).
-        const result = await pool.request()
-            .input('Username', sql.NVarChar(100), username)
-            .query(`
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
-
-                SELECT
-                    u.UserID,
-                    u.Username,
-                    u.PasswordHash,
-                    u.RoleName,
-                    u.TrangThai,
-                    n.MaNV
-                FROM [System].[User] u
-                LEFT JOIN [HR].[NhanVien] n ON u.UserID = n.UserID
-                WHERE u.Username = @Username;
-
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
-            `);
-
-        // sp_set_session_context không trả về recordset, nên SELECT là recordset đầu tiên
         return result.recordset[0];
     }
 
     static async getUserByEmail(email) {
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('Email', sql.VarChar(100), email)
-            .query(`
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
-                SELECT u.UserID, u.Username, n.MaNV 
-                FROM [System].[User] u
-                JOIN [HR].[NhanVien] n ON u.UserID = n.UserID
-                WHERE n.Email = @Email;
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
-            `);
+        const query = `
+            SELECT u.UserID, u.Username, n.MaNV 
+            FROM [System].[User] u
+            JOIN [HR].[NhanVien] n ON u.UserID = n.UserID
+            WHERE n.Email = @Email;
+        `;
+        
+        const result = await DBHelper.queryWithContext(null, query,
+            [{ name: 'Email', type: sql.VarChar(100), value: email }],
+            {
+                rlsCtx: {
+                    bypassRLS: 1,
+                    maNV: '',
+                    roleName: 'db_Admin'
+                }
+            }
+        );
         return result.recordset[0];
     }
 
     static async saveResetToken(userId, token, expiryMinutes = 30) {
-        const pool = await poolPromise;
         const expiryDate = new Date();
         expiryDate.setMinutes(expiryDate.getMinutes() + expiryMinutes);
 
-        await pool.request()
-            .input('UserID', sql.Int, userId)
-            .input('Token', sql.VarChar(255), token)
-            .input('ExpiryDate', sql.DateTime, expiryDate)
-            .query(`
-                INSERT INTO System.ResetTokens (UserID, Token, ExpiryDate)
-                VALUES (@UserID, @Token, @ExpiryDate);
-            `);
+        const query = `
+            INSERT INTO System.ResetTokens (UserID, Token, ExpiryDate)
+            VALUES (@UserID, @Token, @ExpiryDate);
+        `;
+        const inputs = [
+            { name: 'UserID', type: sql.Int, value: userId },
+            { name: 'Token', type: sql.VarChar(255), value: token },
+            { name: 'ExpiryDate', type: sql.DateTime, value: expiryDate }
+        ];
+
+        await DBHelper.queryWithContext(null, query, inputs, {
+            rlsCtx: { bypassRLS: 1, maNV: '', roleName: 'db_Admin' }
+        });
     }
 
     static async getUserByResetToken(token) {
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('Token', sql.VarChar(255), token)
-            .query(`
-                SELECT UserID FROM System.ResetTokens 
-                WHERE Token = @Token AND IsUsed = 0 AND ExpiryDate > GETDATE();
-            `);
+        const query = `
+            SELECT UserID FROM System.ResetTokens 
+            WHERE Token = @Token AND IsUsed = 0 AND ExpiryDate > GETDATE();
+        `;
+        const result = await DBHelper.queryWithContext(null, query, 
+            [{ name: 'Token', type: sql.VarChar(255), value: token }],
+            { rlsCtx: { bypassRLS: 1, maNV: '', roleName: 'db_Admin' } }
+        );
         return result.recordset[0];
     }
 
     static async markTokenUsed(token) {
-        const pool = await poolPromise;
-        await pool.request()
-            .input('Token', sql.VarChar(255), token)
-            .query(`UPDATE System.ResetTokens SET IsUsed = 1 WHERE Token = @Token;`);
+        const query = `UPDATE System.ResetTokens SET IsUsed = 1 WHERE Token = @Token;`;
+        await DBHelper.queryWithContext(null, query, 
+            [{ name: 'Token', type: sql.VarChar(255), value: token }],
+            { rlsCtx: { bypassRLS: 1, maNV: '', roleName: 'db_Admin' } }
+        );
     }
 
-    /**
-     * Cập nhật mật khẩu của người dùng theo UserID.
-     * Sử dụng Atomic Batch + SystemAuth để bypass RLS khi UPDATE [System].[User].
-     *
-     * @param {number} userID
-     * @param {Buffer} passwordBuffer - bcrypt hash được encode thành Buffer UTF-8
-     */
     static async updatePassword(userID, passwordBuffer) {
-        const pool = await poolPromise;
-
-        await pool.request()
-            .input('UserID', sql.Int, userID)
-            .input('PasswordHash', sql.VarBinary(sql.MAX), passwordBuffer)
-            .query(`
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
-
-                UPDATE [System].[User]
-                SET PasswordHash = @PasswordHash
-                WHERE UserID = @UserID;
-
-                EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
-            `);
+        const query = `
+            UPDATE [System].[User]
+            SET PasswordHash = @PasswordHash
+            WHERE UserID = @UserID;
+        `;
+        
+        await DBHelper.queryWithContext(null, query,
+            [
+                { name: 'UserID', type: sql.Int, value: userID },
+                { name: 'PasswordHash', type: sql.VarBinary(sql.MAX), value: passwordBuffer }
+            ],
+            {
+                rlsCtx: {
+                    bypassRLS: 1,
+                    maNV: '',
+                    roleName: 'db_Admin'
+                }
+            }
+        );
 
         return true;
     }
-    /**
-     * Ghi nhật ký đăng nhập (Login Audit Log).
-     * Được gọi bất đồng bộ sau khi login thành công.
-     * 
-     * @param {string} loginName
-     * @param {string} hostName
-     * @param {string} appName
-     */
+
     static async addLoginLog(loginName, hostName, appName) {
         try {
-            const pool = await poolPromise;
-            await pool.request()
-                .input('LoginName', sql.NVarChar(100), loginName)
-                .input('HostName', sql.NVarChar(100), hostName)
-                .input('AppName', sql.NVarChar(255), appName)
-                .query(`
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 1, @read_only = 0;
-                    
-                    INSERT INTO [System].[LoginLogs] (LoginName, HostName, AppName, LoginTime)
-                    VALUES (@LoginName, @HostName, @AppName, GETUTCDATE());
-                    
-                    EXEC sp_set_session_context @key = N'SystemAuth', @value = 0, @read_only = 0;
-                `);
+            const query = `
+                INSERT INTO [System].[LoginLogs] (LoginName, HostName, AppName, LoginTime)
+                VALUES (@LoginName, @HostName, @AppName, GETUTCDATE());
+            `;
+            const inputs = [
+                { name: 'LoginName', type: sql.NVarChar(100), value: loginName },
+                { name: 'HostName', type: sql.NVarChar(100), value: hostName },
+                { name: 'AppName', type: sql.NVarChar(255), value: appName }
+            ];
+            await DBHelper.queryWithContext(null, query, inputs, {
+                rlsCtx: { bypassRLS: 1, maNV: '', roleName: 'db_Admin' }
+            });
         } catch (err) {
-            // TUYỆT ĐỐI KHÔNG quăng lỗi (throw) ra ngoài để tránh làm sập luồng đăng nhập chính.
             console.error('[Audit Debug] ❌ Lỗi lưu DB:', err);
         }
     }

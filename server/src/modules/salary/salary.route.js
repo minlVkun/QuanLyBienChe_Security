@@ -1,8 +1,19 @@
 // src/routes/salaryRoutes.js
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const salaryController = require('./salary.controller');
 const { authorize } = require('../../middlewares/authMiddleware');
+
+// Rate limiter riêng cho các thao tác ghi nhạy cảm về lương
+// Giới hạn: tối đa 10 yêu cầu / 10 phút / IP
+const salaryWriteLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Quá nhiều yêu cầu thao tác lương. Vui lòng thử lại sau 10 phút.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 /**
  * @swagger
@@ -75,7 +86,9 @@ router.get('/scales', authorize(['db_Admin', 'db_HR_Payroll', 'db_DeptHead', 'db
  *                   LuongMoi: 5000000
  *                   NgayApDung: "2026-01-01"
  */
-router.get('/history/:maNV', authorize(['db_Admin', 'db_HR_Payroll', 'db_DeptHead', 'db_HR_Human']), salaryController.getHistory);
+// DeptHead bị loại khỏi /history vì endpoint trả về HeSoLuong không masked
+// DeptHead chỉ được xem qua /payroll (đã có masking tầng DB/View)
+router.get('/history/:maNV', authorize(['db_Admin', 'db_HR_Payroll', 'db_HR_Human']), salaryController.getHistory);
 
 /**
  * @swagger
@@ -186,7 +199,9 @@ router.get(
  *       200:
  *         description: Thành công
  */
-router.get('/payroll/:maNV', authorize([]), salaryController.getPersonalPayslips);
+// FIX: authorize([]) = mọi user đều vào được → nguy hiểm. Phải liệt kê roles rõ ràng.
+// Nhân viên (db_Employee) xem phiếu của mình → RLS tại DB tự giới hạn đúng bản ghi
+router.get('/payroll/:maNV', authorize(['db_Admin', 'db_HR_Payroll', 'db_DeptHead', 'db_HR_Human', 'db_Employee']), salaryController.getPersonalPayslips);
 
 /**
  * @swagger
@@ -212,6 +227,7 @@ router.get('/payroll/:maNV', authorize([]), salaryController.getPersonalPayslips
  */
 router.post(
   '/promote',
+  salaryWriteLimiter,
   authorize(['db_Admin', 'db_HR_Payroll']),
   salaryController.promoteSalary
 );
@@ -242,6 +258,7 @@ router.post(
  */
 router.post(
   '/monthly',
+  salaryWriteLimiter,
   authorize(['db_Admin', 'db_HR_Payroll']),
   salaryController.createMonthlySalary
 );
@@ -272,7 +289,7 @@ router.post(
  *       409:
  *         description: Đã tồn tại
  */
-router.post('/payroll/generate', authorize(['db_Admin', 'db_HR_Payroll']), salaryController.generatePayroll);
+router.post('/payroll/generate', salaryWriteLimiter, authorize(['db_Admin', 'db_HR_Payroll']), salaryController.generatePayroll);
 
 /**
  * @swagger

@@ -3,8 +3,10 @@ const SalaryModel = require('./salary.model');
 const EmployeeModel = require('../employee/employee.model');
 const AuditService = require('../audit/audit.service');
 const { poolPromise, sql } = require('../../config/db');
+const DBHelper = require('../../utils/dbHelper');
 const { salarySchema, formatZodError } = require('./salary.validation');
 const { salaryScaleSchema, salaryStepSchema, formatZodError: formatScaleError } = require('./salaryScale.validation');
+const ConfigModel = require('../systemConfig/config.model');
 
 class SalaryService {
     
@@ -40,12 +42,21 @@ class SalaryService {
         try {
             await transaction.begin();
 
-            const LUONG_CO_SO = 2340000;
-            const PHU_CAP_MAC_DINH = 500000;
-            const TY_LE_KHAU_TRU = 0.105; 
+            const configs = await ConfigModel.getAllConfigs();
+            const getConfig = (key, defaultVal, isFloat = false) => {
+                const c = configs.find(x => x.ConfigKey === key);
+                if (!c) return defaultVal;
+                return isFloat ? parseFloat(c.ConfigValue) : parseInt(c.ConfigValue, 10);
+            };
+
+            const LUONG_CO_SO = getConfig('LUONG_CO_SO', 2340000);
+            const PHU_CAP_MAC_DINH = getConfig('PHU_CAP_MAC_DINH', 500000);
+            const TY_LE_KHAU_TRU = getConfig('TY_LE_KHAU_TRU', 0.105, true); 
+            const NGAY_CONG_CHUAN = getConfig('NGAY_CONG_CHUAN', 26.0, true);
+            const PHAT_DI_TRE = getConfig('PHAT_DI_TRE', 1000);
 
             // 1. Tính lương hàng loạt (Truyền transaction + Tăng timeout lên 2 phút cho batch lớn)
-            const result = await SalaryModel.generatePayroll(reqUser, thangNam, LUONG_CO_SO, PHU_CAP_MAC_DINH, TY_LE_KHAU_TRU, transaction);
+            const result = await SalaryModel.generatePayroll(reqUser, thangNam, LUONG_CO_SO, PHU_CAP_MAC_DINH, TY_LE_KHAU_TRU, NGAY_CONG_CHUAN, PHAT_DI_TRE, transaction);
             
             // 2. Ghi Audit Log TRONG Transaction
             await AuditService.logAction(reqUser, {
@@ -91,21 +102,21 @@ class SalaryService {
         const pool = await poolPromise;
         const attQuery = `
             SELECT 
-                COUNT(*) as NgayCong, 
-                SUM(ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) as TongPhutTre
+                SUM(CASE WHEN TrangThai NOT IN (N'Quên checkout', N'Chưa hoàn tất') THEN 1 ELSE 0 END) as NgayCong, 
+                SUM(CASE WHEN TrangThai NOT IN (N'Quên checkout', N'Chưa hoàn tất') THEN (ISNULL(SoPhutDiTre, 0) + ISNULL(SoPhutVeSom, 0)) ELSE 0 END) as TongPhutTre
             FROM HR.ChamCong
             WHERE MaNV = @MaNV AND FORMAT(NgayChamCong, 'MM/yyyy') = @ThangNam
         `;
-        const attRes = await pool.request()
-            .input('MaNV', sql.VarChar, maNhanVien)
-            .input('ThangNam', sql.VarChar, thangNam)
-            .query(attQuery);
+        const attRes = await DBHelper.queryWithContext(reqUser, attQuery, [
+            { name: 'MaNV', type: sql.VarChar, value: maNhanVien },
+            { name: 'ThangNam', type: sql.VarChar, value: thangNam }
+        ]);
         
         const attendance = attRes.recordset[0] || { NgayCong: 0, TongPhutTre: 0 };
 
         // 3. Lấy phụ cấp cố định
         const pcQuery = `SELECT SUM(SoTien) as TongPhuCap FROM HR.PhuCapCoDinh WHERE MaNV = @MaNV AND IsActive = 1`;
-        const pcRes = await pool.request().input('MaNV', sql.VarChar, maNhanVien).query(pcQuery);
+        const pcRes = await DBHelper.queryWithContext(reqUser, pcQuery, [{ name: 'MaNV', type: sql.VarChar, value: maNhanVien }]);
         const phuCap = pcRes.recordset[0]?.TongPhuCap || 0;
 
         // 4. Tính toán theo công thức nghiệp vụ
@@ -239,7 +250,17 @@ class SalaryService {
             const d = new Date();
             filters.thangNam = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         }
-        return await SalaryModel.getPayrollList(reqUser, filters);
+        const data = await SalaryModel.getPayrollList(reqUser, filters);
+        
+        // Log Read Audit
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BangLuong',
+            Action: 'READ_LIST',
+            RecordID: filters.thangNam,
+            NewData: { filters, count: data.length }
+        });
+
+        return data;
     }
 
     /**
@@ -250,7 +271,17 @@ class SalaryService {
             const error = new Error("Mã nhân viên là bắt buộc.");
             error.statusCode = 400; throw error;
         }
-        return await SalaryModel.getPayslipHistory(reqUser, maNV);
+        const data = await SalaryModel.getPayslipHistory(reqUser, maNV);
+
+        // Log Read Audit
+        await AuditService.logAction(reqUser, {
+            TableName: 'Salary.BangLuong',
+            Action: 'READ_DETAIL',
+            RecordID: maNV,
+            NewData: { count: data.length }
+        });
+
+        return data;
     }
 
     /**

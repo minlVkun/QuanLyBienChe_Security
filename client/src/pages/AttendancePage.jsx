@@ -14,6 +14,7 @@ const { Option } = Select;
 const AttendancePage = () => {
     const { user } = useAuth();
     const isAdminOrHR = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll', 'db_DeptHead'].includes(user?.role);
+    const canEdit = ['db_Admin', 'db_HR_Human', 'db_HR_Payroll'].includes(user?.role);
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
@@ -44,7 +45,9 @@ const AttendancePage = () => {
         try {
             const res = await departmentService.getAll();
             setDepartments(Array.isArray(res) ? res : (res?.data || []));
-        } catch (err) { /* silent */ }
+        } catch (err) { 
+            console.error("[Attendance] Lỗi tải danh sách đơn vị:", err);
+        }
     };
 
     const fetchPersonalHistory = useCallback(async () => {
@@ -165,6 +168,10 @@ const AttendancePage = () => {
 
     const handleUpdateManual = async () => {
         try {
+            if (editTimes.gioVao && editTimes.gioRa && editTimes.gioRa.isBefore(editTimes.gioVao)) {
+                return message.error("Giờ ra không thể sớm hơn giờ vào!");
+            }
+
             setLoading(true);
             await attendanceService.updateManual(editingRecord.ChamCongID, {
                 gioVao: editTimes.gioVao ? editTimes.gioVao.toISOString() : null,
@@ -253,7 +260,7 @@ const AttendancePage = () => {
             responsive: ['md']
         },
         ...commonColumns,
-        {
+        canEdit ? {
             title: 'Sửa',
             key: 'actions',
             width: 60,
@@ -265,8 +272,8 @@ const AttendancePage = () => {
                     className="text-indigo-600 hover:bg-indigo-50"
                 />
             )
-        }
-    ];
+        } : null
+    ].filter(Boolean);
 
     const renderPersonalTab = () => (
         <div className="space-y-6">

@@ -20,9 +20,8 @@ class ScheduleModel {
                 ca.TenCa,
                 ca.GioBatDau,
                 ca.GioKetThuc,
-                l.NgayLam,
+                l.Ngay AS NgayLam,
                 l.GhiChu,
-                l.NgayTao,
                 COUNT(*) OVER() AS TotalRows
             FROM [HR].[LichLamViec] l
             INNER JOIN [HR].[NhanVien] nv ON l.MaNV = nv.MaNV
@@ -37,11 +36,11 @@ class ScheduleModel {
         ];
 
         if (fromDate) {
-            query += ` AND l.NgayLam >= @FromDate`;
+            query += ` AND l.Ngay >= @FromDate`;
             inputs.push({ name: 'FromDate', type: sql.Date, value: fromDate });
         }
         if (toDate) {
-            query += ` AND l.NgayLam <= @ToDate`;
+            query += ` AND l.Ngay <= @ToDate`;
             inputs.push({ name: 'ToDate', type: sql.Date, value: toDate });
         }
         if (maNV) {
@@ -54,7 +53,7 @@ class ScheduleModel {
         }
 
         query += `
-            ORDER BY l.NgayLam ASC, nv.HoTen ASC
+            ORDER BY l.Ngay ASC, nv.HoTen ASC
             OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
         `;
 
@@ -85,7 +84,7 @@ class ScheduleModel {
         let query = `
             SELECT COUNT(*) AS ConflictCount
             FROM [HR].[LichLamViec]
-            WHERE MaNV = @MaNV AND NgayLam = @NgayLam
+            WHERE MaNV = @MaNV AND Ngay = @NgayLam
         `;
         const inputs = [
             { name: 'MaNV',   type: sql.VarChar(20), value: maNV   },
@@ -104,7 +103,7 @@ class ScheduleModel {
      */
     static async create(reqUser, data, transaction = null) {
         const query = `
-            INSERT INTO [HR].[LichLamViec] (MaNV, MaCaLamViec, NgayLam, GhiChu)
+            INSERT INTO [HR].[LichLamViec] (MaNV, MaCaLamViec, Ngay, GhiChu)
             OUTPUT INSERTED.LichID
             VALUES (@MaNV, @MaCa, @NgayLam, @GhiChu)
         `;
@@ -125,7 +124,7 @@ class ScheduleModel {
         const query = `
             UPDATE [HR].[LichLamViec]
             SET MaCaLamViec = @MaCa,
-                NgayLam     = @NgayLam,
+                Ngay        = @NgayLam,
                 GhiChu      = @GhiChu
             WHERE LichID = @LichID
         `;
@@ -147,18 +146,16 @@ class ScheduleModel {
         return await DBHelper.queryWithContext(reqUser, query, inputs, {}, transaction);
     }
 
-    /**
-     * Phân ca hàng loạt: Gán 1 ca cho nhiều nhân viên / nhiều ngày
-     * Bỏ qua (IGNORE) các cặp (MaNV, NgayLam) đã tồn tại thay vì báo lỗi
-     */
     static async bulkAssign(reqUser, records, transaction = null) {
-        // Dùng MERGE để UPSERT — bỏ qua nếu đã có, chèn mới nếu chưa có
+        // MẶC DÙ ĐÂY LÀ N+1 QUERY, NHƯNG BẮT BUỘC PHẢI DÙNG VÒNG LẶP DO ALWAYS ENCRYPTED!
+        // Nếu dùng OPENJSON, SQL Server không thể tự mã hóa MaNV để JOIN với cột MaNV đã mã hóa.
+        // Bắt buộc phải truyền @MaNV dưới dạng parameter để thư viện mssql ở Node.js mã hóa trước khi gửi đi.
         const query = `
             MERGE [HR].[LichLamViec] AS target
             USING (SELECT @MaNV AS MaNV, @MaCa AS MaCaLamViec, @NgayLam AS NgayLam) AS src
-            ON (target.MaNV = src.MaNV AND target.NgayLam = src.NgayLam)
+            ON (target.MaNV = src.MaNV AND target.Ngay = src.NgayLam)
             WHEN NOT MATCHED THEN
-                INSERT (MaNV, MaCaLamViec, NgayLam, GhiChu)
+                INSERT (MaNV, MaCaLamViec, Ngay, GhiChu)
                 VALUES (src.MaNV, src.MaCaLamViec, src.NgayLam, @GhiChu);
         `;
 

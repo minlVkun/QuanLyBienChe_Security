@@ -35,6 +35,9 @@ router.get('/', authorize(['db_Admin', 'db_HR_Human', 'db_HR_Payroll', 'db_DeptH
 // Sửa dữ liệu chấm công (Chỉ Admin và HR Human)
 router.put('/:id', authorize(['db_Admin', 'db_HR_Human']), attendanceController.updateManual);
 
+// Đánh dấu vắng mặt (Chỉ Admin và HR Human)
+router.post('/mark-absences', authorize(['db_Admin', 'db_HR_Human']), attendanceController.markAbsences);
+
 // Xuất Excel
 router.post('/export', authorize(['db_Admin', 'db_HR_Human', 'db_HR_Payroll']), attendanceController.exportExcel);
 

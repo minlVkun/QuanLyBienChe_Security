@@ -115,7 +115,7 @@ class AuditModel {
                 { name: 'recordID',  type: sql.NVarChar(50), value: recordID ? String(recordID) : null },
                 { name: 'oldData',   type: sql.NVarChar(sql.MAX), value: oldData ? (typeof oldData === 'string' ? oldData : JSON.stringify(oldData)) : null },
                 { name: 'newData',   type: sql.NVarChar(sql.MAX), value: newData ? (typeof newData === 'string' ? newData : JSON.stringify(newData)) : null },
-                { name: 'changedBy', type: sql.VarChar(50), value: reqUser.MaNV || 'SYSTEM' }
+                { name: 'changedBy', type: sql.VarChar(50), value: reqUser.MaNV }
             ];
 
             await DBHelper.queryWithContext(reqUser, query, inputs, null, transaction);

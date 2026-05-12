@@ -54,13 +54,15 @@ class DBHelper {
         // Ưu tiên 1: reqUser.rlsContext đã được rlsMiddleware gắn vào (một lần / request).
         // ƯU tiên 2: rlsCtx truyền trực tiếp vào hàm (dùng cho internal calls / tests).
         // Fallback:   tính toán inline từ reqUser (trường hợp không qua middleware).
+        const opts = options || {};
         const resolvedCtx = (reqUser && reqUser.rlsContext) ? reqUser.rlsContext
-            : options.rlsCtx ? options.rlsCtx
+            : opts.rlsCtx ? opts.rlsCtx
                 : null;
 
         let maNV, maDonVi, bypassRLS, isDeptHead, roleName;
 
-        if (resolvedCtx && typeof resolvedCtx.maNV === 'string' && resolvedCtx.maNV.trim()) {
+        // Dùng resolvedCtx nếu: có bypassRLS=1 (login/internal) HOẶC có maNV hợp lệ (request thông thường)
+        if (resolvedCtx && (resolvedCtx.bypassRLS === 1 || (typeof resolvedCtx.maNV === 'string' && resolvedCtx.maNV.trim()))) {
             // Đường dẫn tối ưu: rlsMiddleware đã tính toán sẵn — dùng trực tiếp.
             maNV = resolvedCtx.maNV;
             maDonVi = resolvedCtx.maDonVi || '';
@@ -71,7 +73,7 @@ class DBHelper {
         } else {
             // Fallback: tính toán inline từ reqUser (dùng cho internal calls / tests).
             roleName = (reqUser && reqUser.RoleName) ? reqUser.RoleName.trim() : '';
-            maNV = (reqUser && typeof reqUser.MaNV === 'string') ? reqUser.MaNV.trim() : 'ADMIN_SYSTEM';
+            maNV = (reqUser && typeof reqUser.MaNV === 'string') ? reqUser.MaNV.trim() : '';
             maDonVi = (reqUser && typeof reqUser.MaDonVi === 'string') ? reqUser.MaDonVi.trim() : '';
             bypassRLS = BYPASS_ROLES.has(roleName) ? 1 : 0;
             isDeptHead = (roleName === DEPTHEAD_ROLE) ? 1 : 0;
@@ -80,7 +82,8 @@ class DBHelper {
         // ── 2. Fail-Closed: MaNV phải hợp lệ trước khi cho phép query ────────────
         // Đây là lớp bảo vệ thứ hai (sau rlsMiddleware).
         // Ngăn chặn trường hợp dbHelper bị gọi trực tiếp mà không qua middleware.
-        if (!maNV || !maNV.trim()) {
+        // NGOẠI LỆ: Cho phép MaNV trống nếu đang ở chế độ BypassRLS (dùng cho Login/Internal).
+        if ((!maNV || !maNV.trim()) && !bypassRLS) {
             const err = new Error('[dbHelper] FAIL-CLOSED: MaNV không hợp lệ — truy cập DB bị chặn');
             err.statusCode = 403;
             throw err;

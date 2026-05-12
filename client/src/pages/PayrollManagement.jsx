@@ -202,17 +202,17 @@ const PayrollManagement = () => {
 
   // --- RENDERER: BẢO MẬT RLS ---
   const renderSecureAmount = (val) => {
-    if (val === '***') {
+    if (val === '***' || val === null || val === undefined) {
       return (
         <Tooltip title="Dữ liệu bảo mật bởi chính sách RLS">
           <div className="flex items-center justify-end text-gray-300 gap-1 animate-pulse cursor-help">
             <Lock size={12} />
-            <span className="text-[11px] font-bold uppercase">Bảo mật</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest">***</span>
           </div>
         </Tooltip>
       );
     }
-    return <span className="font-black text-blue-700">{new Intl.NumberFormat('vi-VN').format(val)} đ</span>;
+    return <span className="font-black text-blue-700">{new Intl.NumberFormat('vi-VN').format(Number(val) || 0)} đ</span>;
   };
 
   const columns = [
@@ -236,7 +236,11 @@ const PayrollManagement = () => {
       title: 'HỆ SỐ',
       dataIndex: 'HeSoLuong',
       align: 'center',
-      render: (v) => <Tag color="blue" className="rounded-md border-none font-bold px-3">{v}</Tag>
+      render: (v) => v === '***' ? (
+        <Tooltip title="Hệ số lương được bảo mật">
+          <Lock size={12} className="text-gray-300 animate-pulse mx-auto" />
+        </Tooltip>
+      ) : <Tag color="blue" className="rounded-md border-none font-bold px-3">{v}</Tag>
     },
     {
       title: 'TRẠNG THÁI',
